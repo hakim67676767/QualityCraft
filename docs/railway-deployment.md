@@ -15,6 +15,8 @@ GRANT ALL PRIVILEGES ON `railway`.* TO 'qualitycraft_app'@'%';
 
 The grant is confined to that application database, with no global administrative privileges or grant option. It includes schema permissions needed by setup and migrations. Database names in backticks are SQL identifiers; use the exact database created by the service. Do not change or overwrite an existing user's password as part of this command. Keep the chosen password in Railway's private variables, not in source files or chat.
 
+Alternatively, for the first deployment only, configure `DB_ADMIN_USER=root` and private `DB_ADMIN_PASSWORD=${{MySQL.MYSQL_ROOT_PASSWORD}}` on the web service. Set its pre-deploy command to `node scripts/provision-database-user.js && npm run setup`. The helper creates the dedicated `DB_USER` with the private `DB_PASSWORD`, grants access only to `DB_NAME`, and verifies that login works. Existing passwords are not overwritten. After a successful deployment, remove both `DB_ADMIN_*` variables and change pre-deploy to `npm run migrate`. The running application always uses its dedicated account; retain no root credential reference on the web service.
+
 Railway's **Copy SSH Command** for the MySQL service can be used by an authorised operator to open its shell, then run `mysql --user=root --password` and enter the database administrator password at the prompt. This reaches the database internally without requiring a permanent public database endpoint. Refer to the current Railway CLI instructions if SSH is unavailable on your account.
 
 ## 2. Connect the GitHub repository

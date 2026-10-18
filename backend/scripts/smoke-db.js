@@ -17,12 +17,21 @@ async function main() {
   let pool
   let server
   const restoreDatabaseName = `${testDatabase}_restored`
+  const applicationUser = `${testDatabase}_app`
   try {
     await root.query(`CREATE DATABASE \`${testDatabase}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`)
     process.env.DB_NAME = testDatabase
     process.env.JWT_SECRET = 'temporary-smoke-test-secret-only'
+    const applicationPassword = crypto.randomBytes(32).toString('hex')
+    const provision = { DB_HOST: connectionOptions.host, DB_PORT: String(connectionOptions.port), DB_NAME: testDatabase, DB_USER: applicationUser, DB_PASSWORD: applicationPassword, DB_ADMIN_USER: connectionOptions.user, DB_ADMIN_PASSWORD: connectionOptions.password }
+    const { provisionDatabaseUser } = require('./provision-database-user')
+    await provisionDatabaseUser(provision)
+    await provisionDatabaseUser(provision)
+    await assert.rejects(provisionDatabaseUser({ ...provision, DB_PASSWORD: crypto.randomBytes(32).toString('hex') }), /Access denied/)
+    const scopedConnection = await mysql.createConnection({ ...connectionOptions, database: testDatabase, user: applicationUser, password: applicationPassword })
+    try { await assert.rejects(scopedConnection.query('SELECT 1 FROM mysql.user'), /denied/) } finally { await scopedConnection.end() }
     for (let run = 0; run < 2; run++) {
-      const output = execFileSync(process.execPath, [path.join(__dirname, 'setup.js')], { env: process.env, timeout: 45_000, encoding: 'utf8' })
+      const output = execFileSync(process.execPath, [path.join(__dirname, 'setup.js')], { env: { ...process.env, DB_USER: applicationUser, DB_PASSWORD: applicationPassword }, timeout: 45_000, encoding: 'utf8' })
       assert.match(output, /QualityCraft database ready/, 'Setup must finish successfully on both fresh and existing installations')
     }
     pool = require('../db')
@@ -307,6 +316,8 @@ async function main() {
     assert.match(restoreDatabaseName, /^qualitycraft_test_[0-9a-f]{8}_restored$/)
     await root.query(`DROP DATABASE IF EXISTS \`${restoreDatabaseName}\``)
     await root.query(`DROP DATABASE IF EXISTS \`${testDatabase}\``)
+    assert.match(applicationUser, /^qualitycraft_test_[0-9a-f]{8}_app$/)
+    await root.query('DROP USER IF EXISTS ?@?', [applicationUser, '%'])
     await root.end()
   }
 }
