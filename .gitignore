@@ -1,0 +1,23 @@
+node_modules/
+.env*
+!.env.example
+dist/
+*.database-backup.json
+.playwright-cli/
+
+# Local browser profiles, generated QA evidence, and downloaded development tools.
+/design-review/
+/ponytail/
+/playwright-cli/
+/tmp-qualitycraft-report.txt
+
+# Local logs, database dumps, and private credentials.
+*.log
+*.dump
+*.sql.gz
+*.pem
+*.key
+*.p12
+*.pfx
+.DS_Store
+Thumbs.db

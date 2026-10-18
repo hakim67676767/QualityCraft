@@ -1,0 +1,51 @@
+async page => {
+  const errors = [];
+  const onError = error => errors.push(error.message);
+  page.on('pageerror', onError);
+  async function createInstrument(phase, title, version, prompt, options, answer) {
+    const editor = page.locator('.research-instrument-form');
+    await editor.getByRole('combobox', { name: 'Phase', exact: true }).selectOption(phase);
+    await editor.getByRole('textbox', { name: 'Version', exact: true }).fill(version);
+    await editor.getByRole('textbox', { name: 'Instrument title', exact: true }).fill(title);
+    await editor.getByRole('combobox', { name: 'Status', exact: true }).selectOption('published');
+    await editor.getByRole('textbox', { name: 'Question', exact: true }).fill(prompt);
+    await editor.getByRole('combobox', { name: 'Type', exact: true }).selectOption('multiple_choice');
+    await editor.getByRole('textbox', { name: 'Answer choices, one per line', exact: true }).fill(options);
+    await editor.getByRole('textbox', { name: 'Correct answer', exact: true }).fill(answer);
+    await editor.getByRole('button', { name: 'Create instrument', exact: true }).click();
+    await page.getByText('Assessment instrument created.', { exact: true }).waitFor();
+  }
+  await createInstrument('pre', 'Browser baseline assessment', 'ui-pre-1', 'What is the main goal of quality assurance?', 'Prevent defects\nWrite more code', 'Prevent defects');
+  await createInstrument('post', 'Browser final assessment', 'ui-post-1', 'Which practice helps prevent defects?', 'Peer review\nSkip checks', 'Peer review');
+  await page.screenshot({ path: 'design-review/playwright/02-research-admin.png', fullPage: true });
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export configuration', exact: true }).click();
+  await (await downloadPromise).saveAs('design-review/playwright/configuration-export.json');
+  await page.getByRole('button', { name: 'Manage Content', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Choose module', exact: true }).selectOption({ label: 'Foundations of Quality (published)' });
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await page.getByText('Ready to publish', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'XP & Badges', exact: true }).click();
+  await page.getByRole('heading', { name: 'XP rules' }).waitFor();
+  await page.getByRole('heading', { name: 'Badges', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Sign Out' }).click();
+  await page.locator('.role-teacher').click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('teacher@browser.test');
+  await page.getByLabel('Password', { exact: true }).fill('BrowserTest2026!');
+  await page.getByRole('button', { name: 'Sign in & keep learning' }).click();
+  await page.getByRole('button', { name: 'Classes', exact: true }).click();
+  await page.getByPlaceholder('New class name').fill('Browser QA Class');
+  await page.getByRole('button', { name: 'Create class', exact: true }).click();
+  await page.getByRole('heading', { name: 'Browser QA Class', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Assignments', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Class', exact: true }).selectOption({ label: 'Browser QA Class' });
+  await page.getByRole('combobox', { name: 'Practical activity', exact: true }).selectOption({ label: 'Write a test case' });
+  await page.locator('#assignment-due').fill('2026-10-30T09:00');
+  await page.getByRole('button', { name: 'Assign activity', exact: true }).click();
+  await page.getByText('Activity assigned successfully.', { exact: true }).waitFor();
+  await page.locator('.assignment-table').getByText('Write a test case', { exact: true }).waitFor();
+  await page.screenshot({ path: 'design-review/playwright/03-teacher-assignment.png', fullPage: true });
+  page.off('pageerror', onError);
+  if (errors.length) throw new Error(JSON.stringify(errors));
+  return { passed: ['published multiple-choice pre/post assessments', 'configuration download', 'module preview', 'gamification', 'teacher login', 'class creation', 'activity assignment with due date'], browserErrors: errors };
+}

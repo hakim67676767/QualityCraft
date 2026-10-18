@@ -1,0 +1,28 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node tests/api.test.js && node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js && node check-sql.cjs",
+    "start": "node server.js",
+    "migrate": "node migrations/run.js",
+    "setup": "node scripts/setup.js",
+    "admin:create": "node scripts/create-admin.js",
+    "test:unit": "node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js && node check-sql.cjs",
+    "test:db": "node scripts/smoke-db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.2",
+    "pdfkit": "^0.15.2"
+  }
+}

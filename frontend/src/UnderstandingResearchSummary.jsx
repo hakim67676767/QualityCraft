@@ -1,0 +1,8 @@
+export default function UnderstandingResearchSummary({ summary = {} }) {
+  return <>
+    <dl className="research-summary-list"><div><dt>Matched before/after surveys</dt><dd>{summary.validPairs || 0}</dd></div><div><dt>Incomplete or incompatible pairs</dt><dd>{summary.incompleteCount || 0}</dd></div><div><dt>Before learning: average agreement</dt><dd>{summary.preMean ?? '—'} / 5</dd></div><div><dt>After learning: average agreement</dt><dd>{summary.postMean ?? '—'} / 5</dd></div><div><dt>Average change in rating</dt><dd>{summary.averageChange == null ? '—' : `${summary.averageChange > 0 ? '+' : ''}${summary.averageChange}`}</dd></div></dl>
+    <p className="understanding-results-note">Ratings measure self-reported understanding, not tested knowledge. Only authorised students with the same statements and concept keys in both surveys are compared. Changes use points on the 1–5 agreement scale.</p>
+    {summary.incompatiblePairs > 0 && <p className="understanding-results-note">{summary.incompatiblePairs} pairs use different statements or concepts and are excluded from this comparison.</p>}
+    {summary.items?.length > 0 && <div className="research-table-wrap understanding-item-table" role="region" aria-label="Understanding by statement" tabIndex="0"><table><thead><tr><th scope="col">Software-testing statement</th><th scope="col">Pairs</th><th scope="col">Before / 5</th><th scope="col">After / 5</th><th scope="col">Change</th></tr></thead><tbody>{summary.items.map((item) => <tr key={`${item.key}:${item.statement}`}><th scope="row">{item.statement}</th><td>{item.pairs}</td><td>{item.preMean}</td><td>{item.postMean}</td><td>{item.change > 0 ? '+' : ''}{item.change}</td></tr>)}</tbody></table></div>}
+  </>
+}

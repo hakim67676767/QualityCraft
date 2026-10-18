@@ -1,0 +1,96 @@
+/* Desktop and tablet staff screens use the existing QualityCraft palette. */
+@media (min-width: 768px) {
+  .staff-workspace { --staff-ink: var(--studio-ink); --staff-muted: var(--studio-secondary); }
+  .staff-workspace h1, .staff-workspace h2, .staff-workspace h3, .staff-workspace h4 { text-wrap: balance; }
+  .staff-workspace p { text-wrap: pretty; }
+  .staff-workspace .dashboard-content { max-width: 1440px; }
+  .staff-workspace .workspace-header { max-width: 1440px; padding-bottom: 20px; }
+  .staff-workspace .section-intro { margin-bottom: 20px; }
+  .staff-workspace .section-intro h2 { font-size: 23px; }
+  .staff-workspace .app-sidebar { height: 100dvh; overflow-y: auto; }
+  .staff-workspace .app-nav { flex-shrink: 0; }
+  .staff-workspace .sidebar-footer { margin-top: auto; padding-top: 18px; }
+  .staff-workspace button:disabled { cursor: not-allowed; }
+  .staff-workspace .metric-card strong { color: var(--studio-purple); font-variant-numeric: tabular-nums; }
+  .staff-workspace .metric-card small { color: var(--staff-muted); }
+
+  /* Compact overview with a clear action and less decorative competition. */
+  .staff-workspace .staff-hero { min-height: 220px; grid-template-columns: minmax(0, 1fr) 220px; padding: 28px 32px; border-color: var(--line); border-radius: 16px; color: var(--staff-ink); background: white; }
+  .staff-workspace .staff-hero::before, .staff-workspace .staff-orbit { display: none; }
+  .staff-workspace .staff-hero-kicker { color: var(--studio-purple); background: #f6f1fc; border-color: var(--line); }
+  .staff-workspace .staff-hero h2 { color: var(--staff-ink); font-size: 30px; margin-top: 12px; }
+  .staff-workspace .staff-hero p { color: var(--staff-muted); line-height: 1.65; }
+  .staff-workspace .staff-primary-action { color: white; border-color: var(--studio-purple); background: var(--studio-purple); box-shadow: none; }
+  .staff-workspace .staff-secondary-action { color: var(--studio-purple); border-color: #d4c6e8; background: white; }
+  .staff-workspace .staff-hero-visual { width: 200px; height: 170px; }
+  .staff-workspace .staff-hero-icon { background: #f6f1fc; border-color: var(--line); box-shadow: none; transform: translate(-50%, -50%); }
+  .staff-workspace .staff-mini-card { background: white; border-color: var(--line); box-shadow: none; transform: none; }
+  .staff-workspace .staff-mini-card strong { color: var(--studio-purple); }
+  .staff-workspace .staff-metrics .metric-card::after { display: none; }
+  .staff-workspace .staff-quick-grid > button:hover, .staff-workspace .staff-primary-action:hover { transform: none; }
+  .staff-workspace .staff-quick-grid > button, .staff-workspace .class-card { transition: none; }
+
+  /* Review is the first work area; reports and optional survey details follow. */
+  .monitoring-workspace .monitoring-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .monitoring-workspace .metric-card { min-height: 112px; }
+  .monitoring-workspace .section-intro { align-items: flex-end; gap: 20px; }
+  .monitoring-workspace .section-intro .report-actions { gap: 8px; }
+  .monitoring-workspace .practical-review { margin: 0 0 28px; }
+  .monitoring-workspace .practical-review-heading h2 { font-size: 20px; }
+  .monitoring-workspace .selected-submission > header { background: #faf8fc; }
+  .monitoring-workspace .submission-field p { overflow-wrap: anywhere; }
+  .monitoring-workspace .review-student-name { font-size: 12px; }
+  .monitoring-workspace .review-confirmation { margin-top: 12px; color: #286043; font-size: 13px; }
+  .monitoring-workspace .monitoring-panel { margin-top: 12px; }
+  .monitoring-progress-heading { margin: 0; color: var(--staff-ink); font-size: 18px; }
+  .monitoring-workspace > .report-actions { padding: 14px 0 22px; font-size: 13px; }
+  .monitoring-suitability { margin-top: 12px; }
+  .monitoring-suitability summary { cursor: pointer; color: var(--staff-ink); font-weight: 600; font-size: 16px; }
+  .monitoring-suitability[open] summary { margin-bottom: 16px; }
+  .monitoring-workspace .suitability-summary strong { font-variant-numeric: tabular-nums; }
+
+  /* Research forms have dedicated working space and native section links. */
+  .research-section-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: white; }
+  .research-section-nav a { display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 10px 16px; border-radius: 8px; color: #554268; font-size: 13px; font-weight: 600; text-decoration: none; }
+  .research-section-nav a:hover { color: var(--studio-purple); background: #f6f1fc; }
+  .research-section-nav a span { min-width: 23px; padding: 1px 6px; border-radius: 6px; color: var(--studio-purple); background: #f1ebf9; text-align: center; font-variant-numeric: tabular-nums; }
+  .research-admin .research-section { scroll-margin-top: 24px; }
+  .research-workflow { display: grid; gap: 20px; min-width: 0; }
+  .research-assessment-layout { display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.6fr); gap: 28px; padding-top: 24px; align-items: start; }
+  .research-library { min-width: 0; padding-right: 24px; border-right: 1px solid var(--line); }
+  .research-library h4, .research-editor-intro h4 { margin: 0 0 6px; color: var(--staff-ink); font-size: 15px; }
+  .research-library > p, .research-editor-intro p { color: var(--staff-muted); font-size: 12px; line-height: 1.6; }
+  .research-admin .research-instrument-list { margin-top: 16px; }
+  .research-instrument-list > div { display: grid; gap: 6px; padding-bottom: 12px; }
+  .research-instrument-list button { width: 100%; overflow-wrap: anywhere; }
+  .research-instrument-list button + button { width: auto; justify-self: start; padding: 7px 10px; background: white; }
+  .research-admin .research-instrument-form { margin: 0; padding: 0; border: 0; gap: 16px; }
+  .research-admin .research-question-editor { min-width: 0; margin: 0; padding: 20px; border-color: var(--line); background: #fcfbfd; }
+  .research-admin .research-question-editor textarea { min-height: 88px; resize: vertical; }
+  .research-admin .research-check { justify-content: flex-start; gap: 8px !important; line-height: 1.5; }
+  .research-admin .research-check input { width: 16px; height: 16px; flex: 0 0 16px; padding: 0; }
+  .research-admin .research-enrol-form { margin-top: 0; grid-template-columns: minmax(220px, 1fr) minmax(310px, 1.3fr) auto; }
+  .research-admin .research-enrol-form fieldset { gap: 10px; }
+  .research-admin .research-enrol-form .research-check { flex: 1 0 100%; }
+  .research-admin .research-table-wrap .research-check + .research-check { margin-top: 6px; }
+  .research-admin .research-section-heading .primary-small { white-space: nowrap; flex-shrink: 0; }
+  .research-admin .research-summary-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+  .research-admin .research-metrics small, .research-admin .research-table-wrap td small, .research-admin .research-settings small, .research-admin .research-audit-list span, .research-admin .research-audit-list time { color: var(--staff-muted); }
+  .research-admin .research-settings > small { margin-top: 12px; line-height: 1.6; color: var(--staff-muted); }
+  .research-admin .research-actions button:disabled { opacity: .55; }
+  .staff-workspace .assignment-panel-heading { background: #faf8fc; }
+  .staff-workspace .assignment-form { margin-top: 0; }
+  .staff-workspace .assignment-table td { font-variant-numeric: tabular-nums; }
+}
+
+@media (min-width: 768px) and (max-width: 1120px) {
+  .monitoring-workspace .section-intro { align-items: flex-start; flex-direction: column; }
+  .monitoring-workspace .monitoring-metrics, .staff-workspace .staff-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .research-admin .research-enrol-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .research-admin .research-enrol-form button { justify-self: start; }
+  .research-assessment-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .research-library { padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .research-instrument-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .staff-workspace .staff-hero { grid-template-columns: minmax(0, 1fr); }
+  .staff-workspace .staff-hero-visual { display: none; }
+}
