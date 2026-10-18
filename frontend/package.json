@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test --test-isolation=none src/lib/questions.test.js",
+    "test": "node --test --test-isolation=none src/lib/questions.test.js src/lib/feedback.test.js",
     "dev": "vite",
     "build": "vite build --configLoader native",
     "lint": "eslint .",
