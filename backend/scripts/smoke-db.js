@@ -48,6 +48,7 @@ async function main() {
       return data
     }
     const admin = await request('/api/auth/login', 'POST', { email: 'admin@smoke.test', password: 'temporary-admin-password' })
+    assert.deepEqual(await request('/api/ready'), { status: 'ready' })
     const newModule = await request('/api/admin/modules', 'POST', { title: 'Smoke authored module', description: 'Admin content check', sequenceNo: 10 }, admin.token)
     const newLesson = await request('/api/admin/lessons', 'POST', { moduleId: newModule.module_id, title: 'Authored lesson', content: 'A test case has an input and expected outcome.', sequenceNo: 1 }, admin.token)
     await request('/api/admin/questions', 'POST', { lessonId: newLesson.lesson_id, type: 'short_answer', questionText: 'What describes an expected outcome?', answerKey: 'Expected result', explanation: 'A test case states an expected result.' }, admin.token)

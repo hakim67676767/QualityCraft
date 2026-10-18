@@ -40,6 +40,8 @@ For an existing installation, run `npm run migrate` in `backend` and restart the
 
 ## Production build
 
+For Railway, use the root Dockerfile and follow the [Railway deployment guide](docs/railway-deployment.md). It keeps the frontend and API on one HTTPS origin and documents the separate MySQL account, setup, migrations, readiness check, and first live administrator.
+
 Run `npm ci` and `npm run build` in `frontend`, then `npm ci --omit=dev` in `backend`. Express serves the built frontend and `/api` from the same origin. Leave `VITE_API_URL` unset for this deployment. Configure `backend/.env` from the supplied template: set `NODE_ENV=production`, a random JWT secret of at least 32 bytes, a dedicated database account (not root), and `CORS_ORIGIN=https://your-domain`. Serve HTTPS through the hosting platform or reverse proxy; production sessions use Secure cookies and require HTTPS.
 
 For a new installation, create the empty database and run `npm run setup` with an account permitted to create its schema. For an existing installation, take a private full backup and run `npm run migrate`. Then run `npm start` in `backend` with the production configuration. The runtime database account needs access only to the application database. Production startup rejects missing database credentials, root database accounts, and missing, short, or placeholder JWT secrets. Never copy the local development root credentials to hosting.

@@ -319,6 +319,14 @@ app.get("/api/modules", requireAuth, requireClassMembership, requirePreTest, asy
 });
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+app.get("/api/ready", async (req, res) => {
+    try {
+        await db.promise().execute("SELECT setting_key FROM `system_setting` LIMIT 1");
+        res.json({ status: "ready" });
+    } catch {
+        res.status(503).json({ status: "unavailable" });
+    }
+});
 
 app.get("/api/dashboard", requireAuth, async (req, res) => {
     try {

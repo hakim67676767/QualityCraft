@@ -6,9 +6,11 @@ process.env.NODE_ENV = 'production'
 Object.assign(process.env, { DB_HOST: '127.0.0.1', DB_USER: 'qualitycraft_test', DB_PASSWORD: 'temporary-test-password', DB_NAME: 'qualitycraft_test' })
 const dbPath = require.resolve('../db')
 const queries = []
+let databaseUnavailable = false
 const mockDb = {
   promise: () => ({
     execute: async (sql, params = []) => {
+      if (databaseUnavailable) throw new Error('Database connection unavailable')
       queries.push({ sql, params })
       if (sql.includes('SELECT user_id FROM `user` WHERE email')) return [[]]
       if (sql.includes('SELECT role_id, role_name FROM `role`')) return [[{ role_id: 1, role_name: 'student' }]]
@@ -50,6 +52,25 @@ test('public sign-up cannot request administrator access', async () => {
     const cookieResponse = await fetch(`${address}/api/me`, { headers: { Cookie: session.split(';')[0] } })
     assert.equal(cookieResponse.status, 200)
   } finally { await new Promise((resolve) => server.close(resolve)) }
+})
+
+test('deployment readiness requires a reachable migrated database and does not disclose failures', async () => {
+  const server = app.listen(0)
+  try {
+    await new Promise((resolve) => server.once('listening', resolve))
+    const base = `http://127.0.0.1:${server.address().port}`
+    const ready = await fetch(`${base}/api/ready`)
+    assert.equal(ready.status, 200)
+    assert.deepEqual(await ready.json(), { status: 'ready' })
+    databaseUnavailable = true
+    const unavailable = await fetch(`${base}/api/ready`)
+    assert.equal(unavailable.status, 503)
+    assert.deepEqual(await unavailable.json(), { status: 'unavailable' })
+    assert.equal((await fetch(`${base}/api/health`)).status, 200)
+  } finally {
+    databaseUnavailable = false
+    await new Promise((resolve) => server.close(resolve))
+  }
 })
 
 test('invalid sessions and request bodies fail safely, and repeated login failures are limited', async () => {
