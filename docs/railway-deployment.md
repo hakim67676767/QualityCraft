@@ -15,7 +15,7 @@ GRANT ALL PRIVILEGES ON `railway`.* TO 'qualitycraft_app'@'%';
 
 The grant is confined to that application database, with no global administrative privileges or grant option. It includes schema permissions needed by setup and migrations. Database names in backticks are SQL identifiers; use the exact database created by the service. Do not change or overwrite an existing user's password as part of this command. Keep the chosen password in Railway's private variables, not in source files or chat.
 
-Alternatively, for the first deployment only, configure `DB_ADMIN_USER=root` and private `DB_ADMIN_PASSWORD=${{MySQL.MYSQL_ROOT_PASSWORD}}` on the web service. Set its pre-deploy command to `node scripts/provision-database-user.js && npm run setup`. The helper creates the dedicated `DB_USER` with the private `DB_PASSWORD`, grants access only to `DB_NAME`, and verifies that login works. Existing passwords are not overwritten. After a successful deployment, remove both `DB_ADMIN_*` variables and change pre-deploy to `npm run migrate`. The running application always uses its dedicated account; retain no root credential reference on the web service.
+Alternatively, for the first deployment only, configure `DB_ADMIN_USER=root` and private `DB_ADMIN_PASSWORD=${{MySQL.MYSQL_ROOT_PASSWORD}}` on the web service. Set its pre-deploy command to `sh -c 'node scripts/provision-database-user.js && npm run setup'`. The explicit shell is required to run chained commands with a Docker deployment. The helper creates the dedicated `DB_USER` with the private `DB_PASSWORD`, grants access only to `DB_NAME`, and verifies that login works. Existing passwords are not overwritten. After a successful deployment, remove both `DB_ADMIN_*` variables and change pre-deploy to `npm run migrate`. The running application always uses its dedicated account; retain no root credential reference on the web service.
 
 Railway's **Copy SSH Command** for the MySQL service can be used by an authorised operator to open its shell, then run `mysql --user=root --password` and enter the database administrator password at the prompt. This reaches the database internally without requiring a permanent public database endpoint. Refer to the current Railway CLI instructions if SSH is unavailable on your account.
 
@@ -67,7 +67,7 @@ Commands run in `/app/backend`, the image's working directory. Setup creates the
 
 The readiness endpoint returns 200 only when the database connection and a migrated settings table can be queried; otherwise it returns a generic 503. `/api/health` remains a separate process liveness endpoint. A healthcheck does not replace functional verification.
 
-Under Networking, generate a Railway domain and set `CORS_ORIGIN` to its HTTPS URL. Production session cookies require HTTPS. Redeploy with the completed variables/settings.
+Under Networking, generate a Railway domain and set its target port to the actual port printed in the app's startup log (Railway assigned 8080 to this deployment). Set `CORS_ORIGIN` to the domain's HTTPS URL. Production session cookies require HTTPS. Redeploy with the completed variables/settings.
 
 ## 5. Create the live administrator
 
@@ -90,6 +90,14 @@ The command refuses to overwrite an existing account. Remove the temporary `ADMI
 
 ## Verification status
 
-Local frontend build, backend tests, and the isolated MySQL setup/migration/readiness tests have been checked. The Docker image still needs its first actual Railway build: Docker is not installed in the local workspace. No Railway service, billing plan, public domain, or database has been created by the agent as part of preparing these files. Validate the hosted build, credentials, HTTPS sessions, backups, and workflows on the live project.
+As of 18 October 2026, the Docker image has built on Railway and the initial database, five course modules, and owner administrator have been created. The trial website is [QualityCraft](https://qualitycraft-web-production.up.railway.app). The running web service is named **QualityCraft-web**, with a separate **MySQL** service and persistent volume. The original empty **QualityCraft** placeholder is not the running web service.
+
+The hosted database readiness check passes. Browser verification covers HTTPS administrator sign-in, Secure/HttpOnly/SameSite session flags, the seeded course, administrator pages and APIs, CSV/PDF exports, reload persistence, and logout. No trial student responses or participant research records were created for that hosted browser check. The full student/teacher course workflows and database recovery were tested in the isolated local installation documented in the release-readiness report.
+
+Private `ADMIN_EMAIL` and `ADMIN_PASSWORD` variables on **QualityCraft-web** hold the owner's initial login details. Copy the password privately before removing these initial-account variables. Future deployments use `npm run migrate`; they must not recreate the administrator or repeat privileged provisioning. The temporary `DB_ADMIN_*` references and temporary SSH key have been removed. The application uses `qualitycraft_app`, scoped to its database.
+
+Railway rejected the attempt to enable daily volume backups: this account requires a **Pro workspace** for native manual backups and backup schedules. No plan upgrade was made. **This is a trial deployment for verification; arrange an automated private backup destination and verify recovery before collecting real student data.** The application's full backup/restore script remains available, but a persistent hosted backup job has not been configured.
+
+The account reported $5 in trial credits and 30 trial days at initial deployment. Monitor Railway usage and arrange ongoing hosting before the trial ends. Initial deployment fixes included explicitly invoking `sh` for chained pre-deploy commands and targeting the assigned application port (8080).
 
 Official references: [Docker builds](https://docs.railway.com/builds/dockerfiles), [MySQL](https://docs.railway.com/databases/mysql), [pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command), [SSH](https://docs.railway.com/cli/ssh), and [Node release status](https://nodejs.org/en/about/previous-releases).
