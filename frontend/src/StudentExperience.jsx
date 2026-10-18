@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import BadgeMedal from './BadgeMedal'
+import { averageBestQuizScore } from './lib/quizScores'
 
 export function CraftIcon({ name, alt = '' }) {
   return <img src={`/streamline/${name}`} alt={alt} />
@@ -56,7 +57,7 @@ export function StudentOverview({ data, questions, journey, onNavigate, user }) 
   const totalModules = journey?.moduleIds?.length || modules.length
   const completedCount = completedIds.size
   const completion = totalModules ? Math.round(completedCount / totalModules * 100) : 0
-  const averageQuiz = data.attempts.length ? Math.round(data.attempts.reduce((sum, item) => sum + Number(item.score), 0) / data.attempts.length) : null
+  const averageQuiz = averageBestQuizScore(data.attempts)
   const xp = Number(data.xpPoints || 0)
   const level = Math.floor(xp / 500) + 1
   const remainingXp = 500 - xp % 500
@@ -81,7 +82,7 @@ export function StudentOverview({ data, questions, journey, onNavigate, user }) 
 
     <div className="student-stat-grid">
       <StatCard icon="learning.svg" label="Modules complete" value={`${completedCount}/${totalModules}`} detail={totalModules ? `${completion}% of your learning path` : 'Your journey is just beginning'} tone="purple" />
-      <StatCard icon="quiz.svg" label="Quiz average" value={averageQuiz === null ? '—' : `${averageQuiz}%`} detail={data.attempts.length ? `${data.attempts.length} quiz ${data.attempts.length === 1 ? 'attempt' : 'attempts'}` : 'Take a quiz to get started'} tone="mint" />
+      <StatCard icon="quiz.svg" label="Quiz average" value={averageQuiz === null ? '—' : `${averageQuiz}%`} detail={data.attempts.length ? 'Highest score per quiz' : 'Take a quiz to get started'} tone="mint" />
       <StatCard icon="celebrate.svg" label="Total XP" value={xp} detail={`${remainingXp} XP to Level ${level + 1}`} tone="peach" />
       <StatCard icon="badges.svg" label="Badges collected" value={data.badges.length} detail={data.badges.length ? 'Every one tells a story' : 'Your first badge is waiting'} tone="yellow" />
     </div>

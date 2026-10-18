@@ -107,7 +107,41 @@ async page => {
   if (await feedback.getByRole('link', { name: /Review the lesson/ }).count()) throw new Error('Perfect attempt still shows retry advice');
   if (await feedback.locator('.quiz-feedback-answer').count() !== 5) throw new Error('Correct answers are duplicated');
   await feedback.screenshot({ path: 'design-review/playwright/46-feedback-perfect.png' });
+  // A worse retake keeps the best grade, including after a full page reload.
+  await page.getByRole('button', { name: /Return to Learning Path/ }).click();
+  await page.getByRole('button', { name: 'Retake Quiz', exact: true }).click();
+  await answerQuiz(['Prevent defects', 'false', 'Code deployment', 'Wrong test document', 'A consistent benchmark'], true);
+  await page.locator('.quiz-submitted').getByText(/Best score: 100%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 60%.*3\/5 correct/).waitFor();
+  if (await feedback.locator('.quiz-feedback-card[data-correct="false"]').count() !== 2) throw new Error('Feedback does not match the lower retake');
+  const retained = await page.evaluate(async () => {
+    const dashboard = await (await fetch('/api/dashboard')).json();
+    const journey = await (await fetch('/api/me/journey')).json();
+    return { scores: dashboard.attempts.map(attempt => Number(attempt.score)), completed: journey.completedModuleIds.length };
+  });
+  if (retained.scores.join(',') !== '60,100,60' || retained.completed !== 1) throw new Error('Saved attempts or completion changed: ' + JSON.stringify(retained));
+  await page.getByRole('button', { name: /Return to Learning Path/ }).click();
+  await page.locator('.path-retake').getByText('Best quiz: 100%', { exact: true }).waitFor();
+  await page.reload();
+  await page.getByRole('button', { name: 'Learning Path', exact: true }).click();
+  await page.locator('.path-retake').getByText('Best quiz: 100%', { exact: true }).waitFor();
+  await page.locator('.path-card').filter({ hasText: 'Foundations of Quality' }).click();
+  await page.locator('.lesson-choice').getByText('Best quiz score: 100%', { exact: true }).waitFor();
+  if (await page.locator('.module-checklist').innerText().then(text => !text.includes('1/1'))) throw new Error('Best-score checklist regressed');
+  await page.locator('.lesson-choice').click();
+  await page.locator('.quiz-submitted').getByText(/Best score: 100%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 60%/).waitFor();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  const quizAverage = page.locator('.student-stat-grid').getByText('Quiz average', { exact: true }).locator('..');
+  if (!(await quizAverage.innerText()).includes('100%')) throw new Error('Dashboard average fell after a lower retake');
+  await page.getByRole('button', { name: 'Progress', exact: true }).click();
+  await page.getByRole('region', { name: 'Quiz attempt history', exact: true }).getByRole('cell', { name: '60%', exact: true }).first().waitFor();
+  // Another retake must reference the latest attempt, even though its score is lower.
+  await page.getByRole('button', { name: 'Learning Path', exact: true }).click();
+  await page.getByRole('button', { name: 'Retake Quiz', exact: true }).click();
+  await answerQuiz(['Prevent defects', 'false', 'Peer review', 'Test plan', 'A consistent benchmark'], true);
+  await page.locator('.quiz-submitted').getByText(/Best score: 100%/).waitFor();
   page.off('pageerror', onError);
   if (errors.length) throw new Error(JSON.stringify(errors));
-  return { passed: ['real quiz submission with mixed results', 'teal correct answers and amber review answers', 'separate submitted/correct values', 'consistent true/false casing', 'long answer wrapping', 'authored explanations retained', 'generic retry text removed', 'WCAG AA text contrast in light/dark at 1440/1024/768', 'keyboard lesson review link', 'all-correct retake without stale advice'], browserErrors: errors };
+  return { passed: ['real quiz submission with mixed results', 'teal correct answers and amber review answers', 'separate submitted/correct values', 'consistent true/false casing', 'long answer wrapping', 'authored explanations retained', 'generic retry text removed', 'WCAG AA text contrast in light/dark at 1440/1024/768', 'keyboard lesson review link', 'all-correct retake without stale advice', 'highest score retained after a lower retake and reload', 'dashboard averages best score per quiz', 'attempt history and completion preserved', 'repeat retakes reference latest attempt'], browserErrors: errors };
 }

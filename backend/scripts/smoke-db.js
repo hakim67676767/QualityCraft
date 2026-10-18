@@ -159,13 +159,19 @@ async function main() {
     if (repeatedFirstAttempt.status !== 409) throw new Error('A quiz was submitted twice without an explicit retake')
     const beforeRetake = await request('/api/dashboard', 'GET', null, student.token)
     const previousAttemptId = beforeRetake.attempts.find((attempt) => attempt.lesson_id === lessons[0])?.attempt_id
-    const retakeBody = { lessonId: lessons[0], previousAttemptId, answers: preKeys.map((row) => row.answer_key) }
+    const retakeBody = { lessonId: lessons[0], previousAttemptId, answers: preKeys.map((row, index) => index < 2 ? 'Incorrect retake answer' : row.answer_key) }
     const repeat = await request('/api/quiz-attempts/retake', 'POST', retakeBody, student.token)
+    assert.equal(repeat.score, 60, 'A lower retake must retain its actual result')
+    assert.equal(repeat.bestScore, 100, 'A lower retake must preserve the highest quiz grade')
+    assert.equal(repeat.progress.status, 'complete', 'A lower retake must not revoke module completion')
     if (repeat.earnedXp !== 0) throw new Error('Quiz retake awarded duplicate XP')
     const repeatedRetake = await fetch(`${base}/api/quiz-attempts/retake`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${student.token}` }, body: JSON.stringify(retakeBody) })
     if (repeatedRetake.status !== 409) throw new Error('The same quiz retake was saved twice')
     const dashboard = await request('/api/dashboard', 'GET', null, student.token)
     if (dashboard.attempts.filter((attempt) => attempt.lesson_id === lessons[0]).length !== 2) throw new Error('Quiz retake was not recorded in the dashboard')
+    assert.deepEqual(dashboard.attempts.filter((attempt) => attempt.lesson_id === lessons[0]).map((attempt) => Number(attempt.score)), [60, 100])
+    const bestScoreReport = (await request(`/api/management/reports/students?classId=${classroom.classId}`, 'GET', null, teacher.token)).find((row) => row.userId === student.user.id)
+    assert.equal(bestScoreReport.quizAverage, 100, 'Teacher reports must average the highest score per quiz')
     const journey = await request('/api/me/journey', 'GET', null, student.token)
     if (!journey.allModulesComplete) throw new Error('Course did not complete after all required work')
     await request(`/api/admin/research-participants/${participant.participantId}`, 'PATCH', { status: 'withdrawn' }, admin.token)

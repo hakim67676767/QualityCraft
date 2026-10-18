@@ -427,6 +427,7 @@ async function submitQuizAttempt(req, res, isRetake) {
         return res.status(201).json({
             ...graded,
             attemptId,
+            bestScore: progress.lessons.find((lesson) => Number(lesson.lessonId) === Number(lessonId)).bestQuizScore,
             earnedXp: quizReward.earnedXp + answerReward.earnedXp + moduleReward.earnedXp,
             newBadges: [...quizReward.newBadges, ...answerReward.newBadges, ...moduleReward.newBadges],
             progress

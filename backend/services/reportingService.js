@@ -20,7 +20,9 @@ const PROGRESS_COLUMNS = `
         WHERE cm.student_id = u.user_id) AS classes,
     (SELECT COUNT(*) FROM progress p JOIN \`module\` m ON m.module_id = p.module_id AND m.status = 'published' WHERE p.user_id = u.user_id AND p.status = 'complete') AS completed_modules,
     (SELECT COUNT(*) FROM \`module\` WHERE status = 'published') AS total_modules,
-    (SELECT ROUND(AVG(qa.score), 2) FROM \`quiz_attempt\` qa WHERE qa.user_id = u.user_id) AS quiz_average,
+    (SELECT ROUND(AVG(best.score), 2) FROM
+        (SELECT user_id, lesson_id, MAX(score) AS score FROM \`quiz_attempt\` GROUP BY user_id, lesson_id) best
+        WHERE best.user_id = u.user_id) AS quiz_average,
     (SELECT COUNT(*) FROM \`quiz_attempt\` qa WHERE qa.user_id = u.user_id) AS quiz_attempts,
     (SELECT MAX(qa.score) FROM \`quiz_attempt\` qa WHERE qa.user_id = u.user_id) AS best_quiz_score,
     (SELECT COUNT(*) FROM \`activity_submission\` s WHERE s.user_id = u.user_id) AS activity_submissions,

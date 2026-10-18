@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './learning-path.css'
 import LessonStudyGuide from './LessonStudyGuide'
 import QuizFeedback from './QuizFeedback'
+import { summarizeQuizAttempts } from './lib/quizScores'
 import { getLessonGuide, getGuideReadingMinutes, getLessonQuestionText } from './content/lessonGuides'
 
 export default function LearningPath({ questions, activities, attempts, journey, error, onXpEarned, ActivityForm, QuestionControl, onNavigate }) {
@@ -39,14 +40,7 @@ export default function LearningPath({ questions, activities, attempts, journey,
     moduleMap.get(lesson.moduleId).lessons.push(lesson)
   }
   const modules = [...moduleMap.values()]
-  const latestAttempts = new Map()
-  for (const attempt of attempts) {
-    const lessonId = Number(attempt.lesson_id)
-    if (!latestAttempts.has(lessonId)) latestAttempts.set(lessonId, attempt)
-  }
-  for (const [lessonId, result] of Object.entries(results)) {
-    if (Number.isFinite(result.score)) latestAttempts.set(Number(lessonId), { lesson_id: Number(lessonId), score: result.score, attempt_id: result.attemptId })
-  }
+  const quizSummaries = summarizeQuizAttempts(attempts, results)
   const selectedModule = modules.find((module) => module.id === selectedModuleId)
   const selectedLesson = selectedModule?.lessons.find((lesson) => lesson.lessonId === selectedLessonId)
   const lessonIsComplete = (lesson) => lesson.completed || completedLessons.includes(lesson.lessonId)
@@ -81,14 +75,14 @@ export default function LearningPath({ questions, activities, attempts, journey,
   }
 
   async function submitQuiz(lesson) {
-    if (submitting || (latestAttempts.has(lesson.lessonId) && retakeLessonId !== lesson.lessonId)) return
+    if (submitting || (quizSummaries.has(lesson.lessonId) && retakeLessonId !== lesson.lessonId)) return
     setSubmitting(lesson.lessonId)
     setQuizError('')
     try {
       const response = await fetch(retakeLessonId === lesson.lessonId ? '/api/quiz-attempts/retake' : '/api/quiz-attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId: lesson.lessonId, previousAttemptId: retakeLessonId === lesson.lessonId ? latestAttempts.get(lesson.lessonId)?.attempt_id : undefined, answers: lesson.questions.map((question) => answers[question.question_id] || '') }),
+        body: JSON.stringify({ lessonId: lesson.lessonId, previousAttemptId: retakeLessonId === lesson.lessonId ? quizSummaries.get(lesson.lessonId)?.latestAttemptId : undefined, answers: lesson.questions.map((question) => answers[question.question_id] || '') }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Unable to submit quiz')
@@ -109,7 +103,7 @@ export default function LearningPath({ questions, activities, attempts, journey,
     const practicals = activities.filter((activity) => ids.has(Number(activity.lesson_id)))
     const required = practicals.filter((activity) => Number(activity.is_required) === 1)
     const read = module.lessons.filter(lessonIsComplete).length
-    const passed = module.lessons.filter((lesson) => Number(latestAttempts.get(lesson.lessonId)?.score) === 100).length
+    const passed = module.lessons.filter((lesson) => quizSummaries.get(lesson.lessonId)?.bestScore === 100).length
     const submitted = required.filter((activity) => activity.submission_id).length
     const totalSteps = module.lessons.length * 2 + required.length
     const finishedSteps = read + passed + submitted
@@ -155,7 +149,7 @@ export default function LearningPath({ questions, activities, attempts, journey,
             <span className="path-card-bottom">{completed ? 'Review module' : unlocked ? detail.finishedSteps ? 'Continue module' : 'Start module' : 'Complete the previous module'}{unlocked && <span aria-hidden="true">↗</span>}</span>
           </button>
           {!unlocked && <p className="course-lock-reason" id={`module-lock-${module.id}`}>Finish {previous?.title || 'the previous module'}: read its lessons, submit required activities, and score 100% on each quiz.</p>}
-          {unlocked && module.lessons.some((lesson) => latestAttempts.has(lesson.lessonId)) && <div className="path-retakes">{module.lessons.filter((lesson) => latestAttempts.has(lesson.lessonId)).map((lesson) => <div className="path-retake" key={lesson.lessonId}><span>{lesson.title} <strong>Latest quiz: {latestAttempts.get(lesson.lessonId).score}%</strong></span><button type="button" onClick={() => startRetake(module.id, lesson.lessonId)}>Retake Quiz</button></div>)}</div>}
+          {unlocked && module.lessons.some((lesson) => quizSummaries.has(lesson.lessonId)) && <div className="path-retakes">{module.lessons.filter((lesson) => quizSummaries.has(lesson.lessonId)).map((lesson) => <div className="path-retake" key={lesson.lessonId}><span>{lesson.title} <strong>Best quiz: {quizSummaries.get(lesson.lessonId).bestScore}%</strong></span><button type="button" onClick={() => startRetake(module.id, lesson.lessonId)}>Retake Quiz</button></div>)}</div>}
           </div>
         </li>
       })}</ol>
@@ -178,9 +172,9 @@ export default function LearningPath({ questions, activities, attempts, journey,
       <header className="course-intro"><div><span className="eyebrow">Module {modules.findIndex((module) => module.id === selectedModule.id) + 1} of {modules.length}</span><h2>{selectedModule.title}</h2><p>{detail.objective || 'Read the lessons, apply the concepts, and check your understanding.'}</p></div><span className="course-state" data-complete={isModuleComplete(selectedModule.id)}>{isModuleComplete(selectedModule.id) ? 'Completed' : 'In progress'}</span></header>
       <div className="module-studio-layout"><section aria-labelledby="module-lessons-heading"><div className="course-section-heading"><div><h3 id="module-lessons-heading">Inside this module</h3><p>{selectedModule.lessons.length} {selectedModule.lessons.length === 1 ? 'lesson' : 'lessons'} · {detail.practicals.length} practical {detail.practicals.length === 1 ? 'activity' : 'activities'} · ~{detail.minutes} min reading</p></div></div>
         <div className="lesson-list">{selectedModule.lessons.map((lesson, index) => {
-          const attempt = latestAttempts.get(lesson.lessonId)
+          const attempt = quizSummaries.get(lesson.lessonId)
           const practicals = activities.filter((activity) => Number(activity.lesson_id) === lesson.lessonId)
-          return <button type="button" className="lesson-choice panel" key={lesson.lessonId} onClick={() => openModule(selectedModule.id, lesson.lessonId)}><span className="lesson-choice-icon" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span><small>LESSON {String(index + 1).padStart(2, '0')}</small><strong>{lesson.title}</strong><em>{attempt ? `Latest quiz score: ${attempt.score}%` : lessonIsComplete(lesson) ? 'Reading complete · continue to practical work and quiz' : 'Start with the lesson, then try the practical activity'}</em><span className="lesson-choice-meta">{practicals.length} {practicals.length === 1 ? 'activity' : 'activities'} · {lesson.questions.length} quiz questions</span></span><span className="course-state">{attempt ? `Quiz ${attempt.score}%` : lessonIsComplete(lesson) ? 'Read' : 'To do'}</span><span className="lesson-choice-arrow" aria-hidden="true">↗</span></button>
+          return <button type="button" className="lesson-choice panel" key={lesson.lessonId} onClick={() => openModule(selectedModule.id, lesson.lessonId)}><span className="lesson-choice-icon" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><span><small>LESSON {String(index + 1).padStart(2, '0')}</small><strong>{lesson.title}</strong><em>{attempt ? `Best quiz score: ${attempt.bestScore}%` : lessonIsComplete(lesson) ? 'Reading complete · continue to practical work and quiz' : 'Start with the lesson, then try the practical activity'}</em><span className="lesson-choice-meta">{practicals.length} {practicals.length === 1 ? 'activity' : 'activities'} · {lesson.questions.length} quiz questions</span></span><span className="course-state">{attempt ? `Best ${attempt.bestScore}%` : lessonIsComplete(lesson) ? 'Read' : 'To do'}</span><span className="lesson-choice-arrow" aria-hidden="true">↗</span></button>
         })}</div>
       </section><aside className="module-checklist"><h3>Your module checklist</h3><progress value={detail.percent} max="100" aria-label="Module progress" /><strong>{detail.percent}% complete</strong><dl><div><dt>Lessons read</dt><dd>{detail.read}/{selectedModule.lessons.length}</dd></div><div><dt>Required activities submitted</dt><dd>{detail.submitted}/{detail.required.length}</dd></div><div><dt>Quizzes scored 100%</dt><dd>{detail.passed}/{selectedModule.lessons.length}</dd></div></dl><p>Your next module opens when all three steps are complete.</p></aside></div>
     </div>
@@ -190,8 +184,8 @@ export default function LearningPath({ questions, activities, attempts, journey,
   const complete = lessonIsComplete(selectedLesson)
   const lessonActivities = activities.filter((activity) => Number(activity.lesson_id) === selectedLesson.lessonId)
   const isRetaking = retakeLessonId === selectedLesson.lessonId
-  const latestAttempt = latestAttempts.get(selectedLesson.lessonId)
-  const quizSubmitted = Boolean(latestAttempt) && !isRetaking
+  const quizSummary = quizSummaries.get(selectedLesson.lessonId)
+  const quizSubmitted = Boolean(quizSummary) && !isRetaking
   const guide = getLessonGuide(selectedLesson.moduleTitle, selectedLesson.title)
 
   return <div className="dashboard-content lesson-page lesson-studio">
@@ -201,7 +195,7 @@ export default function LearningPath({ questions, activities, attempts, journey,
     <article className="panel lesson-reader" id="lesson-reading" tabIndex={-1}><div className="lesson-step"><span>1</span><div><strong>Read, explore, and understand</strong><small>Work through the examples before trying the quiz.</small></div></div><LessonStudyGuide key={selectedLesson.lessonId} guide={guide} originalContent={selectedLesson.content} lessonTitle={selectedLesson.title} />{lessonError && <p className="error-message">{lessonError}</p>}{complete ? <p className="lesson-done">✓ Lesson complete. Your quiz is unlocked.</p> : <button type="button" className="primary-small" disabled={markingLesson === selectedLesson.lessonId} onClick={() => completeLesson(selectedLesson)}>{markingLesson === selectedLesson.lessonId ? 'Saving…' : 'I have finished this lesson'}</button>}</article>
     {!complete ? <section className="panel quiz-locked"><span>🔒</span><div><strong>Quiz locked</strong><p>Finish the lesson above before answering its quiz.</p></div></section> : <>
       {lessonActivities.length > 0 && <section className="panel lesson-work" id="lesson-practice" tabIndex={-1}><div className="lesson-step"><span>2</span><div><strong>Practice the concept</strong><small>Apply what you just learned.</small></div></div>{lessonActivities.map((activity) => <ActivityForm activity={activity} key={activity.activity_id} onXpEarned={onXpEarned} />)}</section>}
-      <section className="panel lesson-quiz" id="lesson-quiz" tabIndex={-1}><div className="lesson-step"><span>{lessonActivities.length ? '3' : '2'}</span><div><strong>Quiz: {selectedLesson.title}</strong><small>{selectedLesson.questions.length} questions based on this lesson</small></div></div>{quizSubmitted ? <div className="quiz-submitted" role="status"><strong>Quiz submitted</strong><p>Latest score: {latestAttempt.score}%{result ? ` (${result.correctAnswers}/${result.totalQuestions} correct)` : ''}. You can stay here to review the lesson and feedback.</p><button type="button" className="back-link" onClick={() => openModule(null)}>← Return to Learning Path for Retake Quiz</button></div> : <><ol>{selectedLesson.questions.map((question) => <li key={question.question_id}><span className="question-type">{question.type.replace('_', ' ')}</span><strong>{getLessonQuestionText(question, guide)}</strong><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers((current) => ({ ...current, [question.question_id]: value }))} /></li>)}</ol><div className="quiz-actions"><button type="button" className="primary-small" onClick={() => submitQuiz(selectedLesson)} disabled={Boolean(submitting) || selectedLesson.questions.some((question) => !answers[question.question_id])}>{submitting === selectedLesson.lessonId ? 'Submitting…' : isRetaking ? 'Submit retake' : 'Submit lesson quiz'}</button>{isRetaking && <button type="button" className="back-link" onClick={() => { setRetakeLessonId(null); setQuizError('') }}>Cancel retake</button>}{quizError && <span className="quiz-error">{quizError}</span>}</div></>}{quizSubmitted && result && Array.isArray(result.feedback) && <QuizFeedback feedback={result.feedback} guide={guide} />}</section>
+      <section className="panel lesson-quiz" id="lesson-quiz" tabIndex={-1}><div className="lesson-step"><span>{lessonActivities.length ? '3' : '2'}</span><div><strong>Quiz: {selectedLesson.title}</strong><small>{selectedLesson.questions.length} questions based on this lesson</small></div></div>{quizSubmitted ? <div className="quiz-submitted" role="status"><strong>Quiz submitted</strong><p>Best score: {quizSummary.bestScore}%. Your highest score is kept for this quiz.</p><p>Latest attempt: {quizSummary.latestScore}%{result ? ` (${result.correctAnswers}/${result.totalQuestions} correct)` : ''}. {result ? 'The feedback below is for this attempt.' : 'You can retake this quiz to practise.'}</p><button type="button" className="back-link" onClick={() => openModule(null)}>← Return to Learning Path for Retake Quiz</button></div> : <><ol>{selectedLesson.questions.map((question) => <li key={question.question_id}><span className="question-type">{question.type.replace('_', ' ')}</span><strong>{getLessonQuestionText(question, guide)}</strong><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers((current) => ({ ...current, [question.question_id]: value }))} /></li>)}</ol><div className="quiz-actions"><button type="button" className="primary-small" onClick={() => submitQuiz(selectedLesson)} disabled={Boolean(submitting) || selectedLesson.questions.some((question) => !answers[question.question_id])}>{submitting === selectedLesson.lessonId ? 'Submitting…' : isRetaking ? 'Submit retake' : 'Submit lesson quiz'}</button>{isRetaking && <button type="button" className="back-link" onClick={() => { setRetakeLessonId(null); setQuizError('') }}>Cancel retake</button>}{quizError && <span className="quiz-error">{quizError}</span>}</div></>}{quizSubmitted && result && Array.isArray(result.feedback) && <QuizFeedback feedback={result.feedback} guide={guide} />}</section>
     </>}
   </div>
 }
