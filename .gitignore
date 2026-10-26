@@ -24,3 +24,6 @@ Thumbs.db
 
 # Local design tool state (snapshots, question rolls, seed salt) — not app source.
 .impeccable/
+
+# Curriculum-revision backup snapshots written by the migration runner.
+backend/.curriculum-backups/

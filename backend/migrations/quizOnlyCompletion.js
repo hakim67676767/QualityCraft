@@ -11,7 +11,7 @@ async function applyQuizOnlyCompletion(pool) {
     const ids = modules.map((module) => Number(module.module_id))
     const placeholders = ids.map(() => '?').join(',')
     const [before] = await pool.execute(`SELECT * FROM progress WHERE module_id IN (${placeholders})`, ids)
-    const directory = path.resolve(__dirname, '../../design-review/curriculum')
+    const directory = process.env.BACKUP_DIR || path.resolve(__dirname, '../.curriculum-backups')
     await fs.mkdir(directory, { recursive: true })
     const backupPath = path.join(directory, `${policy.completionRevision}-${Date.now()}.database-backup.json`)
     await fs.writeFile(backupPath, JSON.stringify({ revision: policy.completionRevision, createdAt: new Date().toISOString(), progress: before }, null, 2), { flag: 'wx' })

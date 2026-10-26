@@ -22,7 +22,7 @@ async function applyCatalogueRevision(pool) {
         const [rows] = await pool.query(`SELECT * FROM \`${table}\``)
         backup[table] = rows
     }
-    const directory = path.resolve(__dirname, '../../design-review/curriculum')
+    const directory = process.env.BACKUP_DIR || path.resolve(__dirname, '../.curriculum-backups')
     await fs.mkdir(directory, { recursive: true })
     const backupPath = path.join(directory, `${policy.revision}-${Date.now()}.database-backup.json`)
     await fs.writeFile(backupPath, JSON.stringify(backup, null, 2), { flag: 'wx' })
