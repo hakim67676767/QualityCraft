@@ -16,7 +16,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --chown=node:node backend ./
 COPY --chown=node:node curriculum-policy.json /app/curriculum-policy.json
 COPY --from=frontend-build --chown=node:node /build/frontend/dist /app/frontend/dist
-RUN mkdir -p /app/design-review/curriculum && chown -R node:node /app/design-review
+RUN mkdir -p /app/design-review/curriculum && chown -R node:node /app/backend /app/design-review
 USER node
 EXPOSE 5000
 CMD ["node", "server.js"]
