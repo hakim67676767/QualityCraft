@@ -1,6 +1,7 @@
 # Send only application inputs to the image builder.
 **
 !Dockerfile
+!curriculum-policy.json
 !frontend/
 !frontend/package.json
 !frontend/package-lock.json

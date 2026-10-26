@@ -21,7 +21,7 @@ const sample = () => fixtureState === 'new' ? { classes: [], progress: [], surve
   progress: [{ progress_id: 1, module_id: 1, percent_complete: 100, status: 'complete' }],
   surveys: [{ phase: 'pre', score: 60, submitted_at: '2026-10-12T08:00:00Z' }],
   badges: ['First Steps', 'Quiz Explorer', 'Quality Thinker', 'Class Companion'].map((name, i) => ({ badge_id: i + 1, name, awarded_at: '2026-10-14T01:00:00Z' })),
-  attempts: [80, 100, 60, 80].map((score, i) => ({ attempt_id: i + 1, lesson_id: 1, lesson_title: 'Foundations of Quality', score, completed_at: `2026-10-14T0${i}:00:00Z` })), xpPoints: 86,
+  attempts: [80, 100, 60, 80].map((score, i) => ({ attempt_id: i + 1, lesson_id: i + 1, lesson_title: titles[i], score, completed_at: `2026-10-14T0${i}:00:00Z` })), xpPoints: 86,
 }
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1:4178')
@@ -127,7 +127,7 @@ try {
   await viewport(320, 740); await checkLayout('Small phone dashboard')
   await viewport(390, 844)
   await evaluate(`[...document.querySelectorAll('.student-text-button')].find(b=>b.textContent.includes('View all badges')).click()`)
-  await until(`!!document.querySelector('.badge-grid')`)
+  await until(`!!document.querySelector('.achievement-grid')`)
   fixtureState = 'new'
   await send('Page.navigate', { url: 'http://127.0.0.1:4178/' })
   await until(`!!document.querySelector('.student-dashboard')`)

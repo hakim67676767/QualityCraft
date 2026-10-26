@@ -1,0 +1,41 @@
+.student-workspace .student-guide-wrap { padding-bottom: 24px; }
+.student-workspace .student-guide { padding: 26px 28px; border: 1px solid #28546a; border-radius: 12px; background: var(--qc-surface); }
+.student-workspace .student-guide-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.student-workspace .student-guide h2 { margin: 0; font-size: 23px; font-weight: 500; line-height: 1.3; }
+.student-workspace .student-guide-heading p { max-width: 70ch; margin: 9px 0 0; color: var(--qc-muted); font-size: 14px; line-height: 1.7; }
+.student-workspace :is(.student-guide-toggle,.student-guide-launch) { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--qc-line); border-radius: 6px; background: transparent; color: var(--qc-green); font-size: 12px; cursor: pointer; }
+.student-workspace :is(.student-guide-toggle,.student-guide-launch):hover { background: var(--qc-tint); }
+.student-workspace .student-guide-toggle .trail-icon { width: 16px; height: 16px; }
+.student-workspace .student-guide-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin: 27px 0 0; padding: 22px 0; border-top: 1px solid var(--qc-line); border-bottom: 1px solid var(--qc-line); list-style: none; }
+.student-workspace .student-guide-steps li { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.student-workspace .student-guide-marker { display: grid; place-items: center; flex: none; width: 29px; height: 29px; border: 1px solid var(--qc-line); border-radius: 6px; color: var(--qc-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.student-workspace .student-guide-marker .trail-icon { width: 17px; height: 17px; }
+.student-workspace .student-guide-steps [data-state=current] .student-guide-marker,.student-workspace .student-guide-steps [data-state=complete] .student-guide-marker { background: var(--qc-green); border-color: var(--qc-green); color: #05202e; }
+.student-workspace .student-guide h3 { margin: 3px 0 8px; font-size: 14px; font-weight: 550; line-height: 1.5; }
+.student-workspace .student-guide h3 span { display: block; margin-top: 3px; color: var(--qc-muted); font-size: 11px; font-weight: 400; }
+.student-workspace .student-guide-steps [data-state=current] h3 span { color: var(--qc-green); }
+.student-workspace .student-guide-steps p { margin: 0; color: var(--qc-muted); font-size: 12px; line-height: 1.7; }
+.student-workspace .student-guide-help { margin: 18px 0 0; }
+.student-workspace .student-guide-help summary { width: fit-content; min-height: 44px; padding: 10px 0; color: var(--qc-green); font-size: 13px; cursor: pointer; }
+.student-workspace .student-guide-help p { max-width: 75ch; margin: 12px 0; color: var(--qc-muted); font-size: 13px; line-height: 1.8; }
+.student-workspace .student-guide-help strong { color: var(--qc-ink); font-weight: 500; }
+.student-workspace .student-guide-action { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 22px; margin-top: 20px; }
+.student-workspace .student-guide-action p { max-width: 52ch; margin: 0; color: var(--qc-muted); font-size: 12px; line-height: 1.7; }
+.student-workspace .student-guide-action strong { color: var(--qc-ink); font-weight: 500; }
+@media (max-width:1180px) {
+  .student-workspace .student-guide-steps { grid-template-columns: minmax(0,1fr); gap: 20px; }
+}
+@media (max-width:760px) {
+  .student-workspace .student-guide { padding: 22px 19px; }
+  .student-workspace .student-guide-heading { flex-wrap: wrap; gap: 12px; }
+  .student-workspace .student-guide h2 { font-size: 21px; }
+  .student-workspace .student-guide-heading p { font-size: 13px; }
+  .student-workspace .header-status { justify-content: flex-end; }
+  .student-workspace .student-guide-launch { padding: 7px 9px; }
+}
+
+@media (max-width:760px) {
+  .student-workspace.app-shell .workspace-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .student-workspace .workspace-header .header-status { justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+  .student-workspace .workspace-header .mobile-signout { width: auto; margin-left: auto; }
+}

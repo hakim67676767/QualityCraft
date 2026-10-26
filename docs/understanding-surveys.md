@@ -29,7 +29,7 @@ There are no correct answers, pass marks, or percentage scores. These responses 
 
 ## Stored data and reports
 
-Each response saves its item ID, concept key, exact statement, and selected rating as a snapshot, together with the average agreement rating. `survey_response.score` and the attempt's `score`/`correct_count` are NULL for ratings. Existing scored responses and their instrument versions remain intact.
+Each response saves its item ID, concept key, exact statement, and selected rating as a snapshot, together with the average agreement rating. For a rating survey the raw score is the **mean agreement rating (1–5)**, which is recorded in `survey_response.score` and the attempt's `score` column so that pre-test and post-test share a single, consistent score field; `correct_count` remains NULL and `rating_mean`/`ratings` retain the survey detail. For a scored knowledge check the `score` is the percentage (0–100). Existing scored responses and their instrument versions remain intact.
 
 The student completes the pre-survey before lessons and the post-survey after completing all modules. Completion still uses the existing server-enforced gates and one-original-response-per-phase rule. Existing accounts retain their original response and can answer the current rating survey again through **Survey Results → Retake pre-test survey / Retake post-test survey**.
 
@@ -37,7 +37,7 @@ Retakes are additional responses stored in `assessment_attempt`, with their rati
 
 Each retake form is signed for its student, phase, version, and most recent attempt. A user-row lock and revision check reject duplicate or stale submissions, including simultaneous submissions from two tabs. Starting another retake explicitly loads a fresh form. Class membership, research-authorisation, and post-test completion prerequisites still apply.
 
-Student results show before/after means out of 5. Teacher monitoring and CSV/PDF reports display rating means separately from percentage scores. Administrator Research & Evidence shows matched authorised pairs and per-statement before/after means and changes. Comparisons require the same concept keys and exact statements in both surveys, regardless of statement order. Missing, withdrawn, invalid, and incompatible pairs cannot enter the paired averages. The raw responses and instrument versions remain in the anonymised export for analysis.
+Student results show before/after means out of 5. Teacher monitoring and CSV/PDF reports display the raw score (a 1–5 mean for rating surveys, or a percentage for scored checks) in a single, consistent field. Administrator Research & Evidence shows matched authorised pairs and per-statement before/after means and changes. Comparisons require the same concept keys and exact statements in both surveys, regardless of statement order. Missing, withdrawn, invalid, and incompatible pairs cannot enter the paired averages. The raw responses and instrument versions remain in the anonymised export for analysis.
 
 Research CSV retains the legacy score columns and adds explicit understanding columns: `pre_understanding_mean_1_to_5`, `post_understanding_mean_1_to_5`, `understanding_change`, `understanding_paired`, and both response snapshots. Exported means and changes use matched pairs. No student names or email addresses are added.
 

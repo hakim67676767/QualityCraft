@@ -10,6 +10,7 @@ const db = require("../db")
 const { tables, columns, indexes, foreignKeys } = require("./schema")
 const { seeds, postDedupeIndexes, gamificationRules, badgeCatalogue } = require("./seeds")
 const { seedUnderstandingSurveys } = require('./understandingSurveys')
+const { applyCurriculumRevision } = require('./threeModuleCurriculum')
 
 const applied = []
 const skipped = []
@@ -155,6 +156,7 @@ async function runMigrations() {
     applied.push(...await seedUnderstandingSurveys(pool))
     await pool.query('UPDATE assessment_attempt aa JOIN survey_response sr ON sr.user_id = aa.user_id AND sr.phase = aa.phase SET aa.ratings = sr.ratings WHERE aa.is_retake = FALSE AND aa.ratings IS NULL AND sr.ratings IS NOT NULL')
 
+    applied.push(...await applyCurriculumRevision(pool))
     return { applied, skipped }
 }
 

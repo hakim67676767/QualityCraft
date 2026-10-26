@@ -74,13 +74,13 @@ async page => {
   }
   await answerQuiz('Write more code');
   await page.getByRole('button', { name: 'Submit lesson quiz', exact: true }).click();
-  await page.locator('.quiz-submitted').getByText(/Latest score: 80%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 80%/).waitFor();
   await page.getByRole('button', { name: /Return to Learning Path/ }).click();
   if (await page.locator('.path-card:disabled').count() !== 4) throw new Error('An 80% quiz unlocked the next module');
   await page.getByRole('button', { name: 'Retake Quiz', exact: true }).click();
   await answerQuiz('Prevent defects');
   await page.getByRole('button', { name: 'Submit retake', exact: true }).click();
-  await page.locator('.quiz-submitted').getByText(/Latest score: 100%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 100%/).waitFor();
   await page.getByRole('button', { name: /Return to Learning Path/ }).click();
   if (await page.locator('.path-card[data-state="complete"]').count() !== 1 || await page.locator('.path-card[data-state="current"]').count() !== 1 || await page.locator('.path-card:disabled').count() !== 3) throw new Error('Module completion did not advance the roadmap');
   await page.screenshot({ path: 'design-review/playwright/36-advancing-learning-path.png', fullPage: true });

@@ -289,21 +289,16 @@ function parseOptionsSafe(value) {
 // A choice question is only valid if its answer key is one of its options,
 // otherwise the quiz becomes unanswerable and every student scores zero.
 function validateQuestionConsistency({ type, options, answerKey }) {
-    if (["multiple_choice", "true_false"].includes(type)) {
-        if (type === "true_false") {
-            if (!["true", "false"].includes(String(answerKey).trim().toLowerCase())) {
-                throw new HttpError(400, "A true/false question must have an answer key of 'true' or 'false'")
-            }
-            return JSON.stringify(["True", "False"])
-        }
-        const parsed = parseOptions(options)
-        const list = parseOptionsSafe(parsed)
-        const match = list.some((option) => option.toLowerCase() === String(answerKey).trim().toLowerCase())
-        if (!match) throw new HttpError(400, "The answer key must match one of the question options")
-        return parsed
+    requireOneOf(type, QUESTION_TYPES, "Question type")
+    const parsed = parseOptions(options)
+    const list = parseOptionsSafe(parsed)
+    if (list.length < 2 || new Set(list.map((option) => option.toLowerCase())).size !== list.length) {
+        throw new HttpError(400, "A multiple-choice quiz needs at least two distinct answer choices")
     }
-    if (!String(answerKey).trim()) throw new HttpError(400, "A short-answer question needs an expected answer")
-    return null
+    if (!list.some((option) => option.toLowerCase() === String(answerKey).trim().toLowerCase())) {
+        throw new HttpError(400, "The answer key must match one of the question options")
+    }
+    return parsed
 }
 
 async function createQuestion(body, actor) {
@@ -432,7 +427,7 @@ async function createActivity(body, actor) {
     const title = requireString(body.title, "Activity title", { max: 160 })
     const activityType = requireOneOf(body.activityType, ACTIVITY_TYPES, "Activity type")
     const instructions = requireString(body.instructions, "Activity instructions", { max: 5000 })
-    const isRequired = optionalBoolean(body.isRequired, true)
+    const isRequired = false
 
     const [result] = await db.promise().execute(
         "INSERT INTO `activity` (lesson_id, title, activity_type, instructions, is_required) VALUES (?, ?, ?, ?, ?)",
@@ -475,7 +470,7 @@ async function updateActivity(activityId, body, actor) {
     }
     if (body.isRequired !== undefined) {
         sets.push("is_required = ?")
-        parameters.push(optionalBoolean(body.isRequired, true))
+        parameters.push(false)
     }
     if (!sets.length) throw new HttpError(400, "No activity fields to update")
 

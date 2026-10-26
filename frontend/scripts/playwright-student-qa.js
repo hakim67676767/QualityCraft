@@ -49,7 +49,7 @@ async page => {
     await activity.getByRole('button', { name: 'Save activity', exact: true }).click();
     await activity.locator('.pill').filter({ hasText: /Submitted|Saved/ }).waitFor();
     await page.getByRole('button', { name: 'Submit lesson quiz', exact: true }).click();
-    await page.locator('.quiz-submitted').getByText(/Latest score: 100%/).waitFor();
+    await page.locator('.quiz-submitted').getByText(/Latest attempt: 100%/).waitFor();
     await page.locator('.feedback-list').getByRole('heading', { name: 'Answer feedback' }).waitFor();
     if (index === 0) await page.screenshot({ path: 'design-review/playwright/07-quiz-feedback.png', fullPage: true });
     await page.getByRole('button', { name: /Return to Learning Path/ }).click();
@@ -57,7 +57,7 @@ async page => {
       await page.getByRole('button', { name: 'Retake Quiz', exact: true }).click();
       await answerQuiz(module.answers);
       await page.getByRole('button', { name: 'Submit retake', exact: true }).click();
-      await page.locator('.quiz-submitted').getByText(/Latest score: 100%/).waitFor();
+      await page.locator('.quiz-submitted').getByText(/Latest attempt: 100%/).waitFor();
       await page.getByRole('button', { name: /Return to Learning Path/ }).click();
     }
   }

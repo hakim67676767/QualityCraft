@@ -4,7 +4,9 @@ A React, Express, and MySQL learning platform for introductory software testing.
 
 The frontend has an illustrated student sign-in experience and a dashboard with a learning trail, earned badges, and level progress. Its role selection, dashboard, learning pages, and staff workspace connect to the real QualityCraft API and database. Public registration still creates student accounts; teachers and administrators sign in with accounts assigned those roles.
 
-Each Learning Path module opens into its lessons. Students read and mark a lesson complete before its own quiz unlocks. The server enforces that order and records lesson completion in MySQL. Existing quiz attempts are counted as completed lessons during migration, so past learning work is preserved.
+Each Learning Path module opens into its lessons. Quizzes are available immediately within an unlocked module. Reading can be marked for personal tracking, but does not gate quiz access or completion. Existing quiz attempts are counted as completed lessons during migration, so past learning work is preserved.
+
+The active course contains three levels: **Foundations of Quality (Easy)**, **Test Case Design (Moderate)**, and **Testing Strategies (Hard)**. Each seeded lesson has six multiple-choice questions with four options. A score of **50% (3/6)** passes; the quiz score alone completes the module and unlocks the next one. Reading and practical activities are optional and never block quizzes, progress, or the next module. Other modules are hidden while their learning records remain stored. See [curriculum revision](docs/curriculum-2026-10-25.md) for migration and verification details.
 
 After submitting a lesson quiz, the student stays on that lesson to see the score and answer feedback. The quiz form closes after the first submission. Learning Path shows the latest score and a **Retake Quiz** button for each attempted lesson. A retake is an explicit new attempt; submitting the same first attempt or the same retake twice is rejected. Retakes update the latest score and progress but do not award the first-attempt XP again. The API uses `POST /api/quiz-attempts` for a first attempt and `POST /api/quiz-attempts/retake` for a retake; the latter requires `previousAttemptId` from the most recent attempt.
 
@@ -36,7 +38,7 @@ After submitting a lesson quiz, the student stays on that lesson to see the scor
 
 5. In `frontend`, run `npm ci`, then `npm run dev`. In a second terminal, run `npm start` from `backend`. Open the URL printed by Vite. Public registration creates student accounts. Administrators create teacher accounts in **Manage users**.
 
-For an existing installation, run `npm run migrate` in `backend` and restart the backend after updating the files. This adds lesson completion records and supplements the three seeded lessons whose quiz concepts needed clearer explanations.
+For an existing installation, run `npm run migrate` in `backend` and restart the backend after updating the files. This also applies the three-module curriculum revision once, backs up the affected content/progress, converts legacy lesson quizzes to MCQ, makes activities optional, and recalculates progress using the 50% pass score.
 
 ## Production build
 
@@ -62,7 +64,7 @@ Administrators manage versioned pre-test and post-test instruments in **Research
 
 Only participants with an authorised status and all three recorded approvals enter research summaries and exports. With **Require research authorisation** enabled, the server checks this rule for pre-tests, post-tests, and suitability submissions. Existing participant approvals can be updated in the participant table. The research export identifies the pre/post instrument versions; mixed version groups are shown separately on the page.
 
-Class assignments and optional due dates appear in the student's Learning Path and activity form. Assignments are class reminders: due dates do not change the published curriculum's required-activity quiz gate. Teacher feedback appears with the student's own submission. Saving changed content marks it submitted again and removes the review for the old version; saving identical content preserves the review.
+Class assignments and optional due dates appear in the student's Learning Path and activity form. Assignments are class reminders: practical submissions and due dates do not block lesson quizzes or module completion. Teacher feedback appears with the student's own submission. Saving changed content marks it submitted again and removes the review for the old version; saving identical content preserves the review.
 
 **Export configuration** downloads content and settings only. For a full database backup containing accounts and individual study records, and safe restoration into a new database, see [database recovery](docs/database-recovery.md). The automated MySQL check tests restoration using temporary databases and refuses to overwrite an existing target.
 

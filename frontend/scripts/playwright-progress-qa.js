@@ -110,7 +110,7 @@ async page => {
   await moduleRow(firstTitle).getByText('50%', { exact: true }).waitFor();
   await openLesson(firstTitle);
   await answerQuiz(['Write more code', ...firstAnswers.slice(1)]);
-  await page.locator('.quiz-submitted').getByText(/Latest score: 80%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 80%/).waitFor();
   await progressPage();
   await moduleRow(firstTitle).getByText('90%', { exact: true }).waitFor();
   if (await page.locator('.progress-course-total > strong').innerText() !== '0%') throw new Error('Partial module incorrectly completes the course');
@@ -123,7 +123,7 @@ async page => {
   await page.getByRole('button', { name: 'Learning Path', exact: true }).click();
   await page.getByRole('button', { name: 'Retake Quiz', exact: true }).click();
   await answerQuiz(firstAnswers, true);
-  await page.locator('.quiz-submitted').getByText(/Latest score: 100%/).waitFor();
+  await page.locator('.quiz-submitted').getByText(/Latest attempt: 100%/).waitFor();
   await progressPage();
   if (await page.locator('.progress-course-total > strong').innerText() !== '20%') throw new Error('One of five completed modules must show 20% course completion');
   await moduleRow(firstTitle).getByText('100%', { exact: true }).waitFor();
@@ -144,7 +144,7 @@ async page => {
     await page.locator('.lesson-done').waitFor();
     await saveActivity();
     await answerQuiz(answers);
-    await page.locator('.quiz-submitted').getByText(/Latest score: 100%/).waitFor();
+    await page.locator('.quiz-submitted').getByText(/Latest attempt: 100%/).waitFor();
     await page.getByRole('button', { name: /Return to Learning Path/ }).click();
   }
   await progressPage();

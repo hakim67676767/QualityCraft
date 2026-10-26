@@ -1,0 +1,12 @@
+{
+  "revision": "three-level-mcq-2026-10-25",
+  "completionRevision": "quiz-only-completion-2026-10-26",
+  "quizPassScore": 50,
+  "lessonWeight": 0,
+  "quizWeight": 100,
+  "modules": [
+    { "title": "Foundations of Quality", "difficulty": "Easy", "sequence": 1 },
+    { "title": "Test Case Design", "difficulty": "Moderate", "sequence": 2 },
+    { "title": "Testing Strategies", "difficulty": "Hard", "sequence": 3 }
+  ]
+}

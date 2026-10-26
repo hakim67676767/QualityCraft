@@ -1,8 +1,12 @@
-import { useId } from 'react'
+import { useContext, useId } from 'react'
+import { TestingPreview, TrailIcon } from './StudentVisuals'
+import { StudentVisualContext } from './studentVisualContext'
 import BadgeMedal from './BadgeMedal'
 import { averageBestQuizScore } from './lib/quizScores'
 
 export function CraftIcon({ name, alt = '' }) {
+  const studentVisuals = useContext(StudentVisualContext)
+  if (studentVisuals) return <TrailIcon name={name} alt={alt} />
   return <img src={`/streamline/${name}`} alt={alt} />
 }
 
@@ -77,7 +81,7 @@ export function StudentOverview({ data, questions, journey, onNavigate, user }) 
   return <div className="dashboard-content student-dashboard">
     <section className="student-hero" aria-labelledby="student-welcome">
       <div className="student-hero-copy"><span className="hero-chip"><span /> YOUR NEXT CHAPTER</span><h2 id="student-welcome">Hey {user.name.split(' ')[0]},<br />let’s build your <em>testing skills.</em></h2><p>One lesson. One challenge. One step closer to<br className="desktop-break" /> creating software that makes a difference.</p><button type="button" className="student-primary" onClick={() => onNavigate(actionView)}>{actionLabel}<span aria-hidden="true">↗</span></button><div className="hero-learning-progress"><progress value={completedCount} max={totalModules || 1} aria-label="Modules completed" /><span><strong>{completedCount}/{totalModules}</strong> modules complete</span></div></div>
-      <div className="student-hero-art"><div className="mascot-caption"><span aria-hidden="true">✦</span> You’ve got this!</div><TesterMascot /><span className="mascot-sticker">Curiosity is your superpower.</span></div>
+      <TestingPreview />
     </section>
 
     <div className="student-stat-grid">

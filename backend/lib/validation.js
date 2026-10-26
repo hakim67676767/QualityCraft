@@ -7,7 +7,7 @@
 const { HttpError } = require("./http")
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const QUESTION_TYPES = ["multiple_choice", "true_false", "short_answer"]
+const QUESTION_TYPES = ["multiple_choice"]
 const ACTIVITY_TYPES = ["test_case", "bug_report", "reflection"]
 const MODULE_STATUSES = ["draft", "published", "hidden"]
 

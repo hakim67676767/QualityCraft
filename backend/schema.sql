@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS `question` (
     options TEXT,
     question_text TEXT NOT NULL,
     answer_key TEXT NOT NULL,
+    explanation TEXT NULL,
     PRIMARY KEY (question_id),
     CONSTRAINT question_lesson_fk FOREIGN KEY (lesson_id) REFERENCES `lesson` (lesson_id)
 );
@@ -112,6 +113,7 @@ CREATE TABLE IF NOT EXISTS `activity` (
     activity_type VARCHAR(30) NOT NULL,
     title VARCHAR(200) NOT NULL,
     instructions TEXT NOT NULL,
+    is_required BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (activity_id),
     CONSTRAINT activity_lesson_fk FOREIGN KEY (lesson_id) REFERENCES `lesson` (lesson_id)
 );

@@ -216,7 +216,7 @@ const columns = [
     { table: "question", column: "points", definition: "INT NOT NULL DEFAULT 1", after: "explanation" },
     { table: "question", column: "updated_at", definition: "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", after: "points" },
 
-    { table: "activity", column: "is_required", definition: "BOOLEAN NOT NULL DEFAULT TRUE", after: "instructions" },
+    { table: "activity", column: "is_required", definition: "BOOLEAN NOT NULL DEFAULT FALSE", after: "instructions" },
     { table: "activity", column: "updated_at", definition: "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", after: "is_required" },
 
     { table: "activity_submission", column: "status", definition: "VARCHAR(20) NOT NULL DEFAULT 'submitted'", after: "content" },

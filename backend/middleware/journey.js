@@ -40,7 +40,7 @@ async function loadPublishedModuleIds() {
 
 async function loadCompletedModuleIds(userId) {
     const [rows] = await db.promise().execute(
-        "SELECT module_id FROM progress WHERE user_id = ? AND status = 'complete'",
+        "SELECT p.module_id FROM progress p JOIN `module` m ON m.module_id = p.module_id WHERE p.user_id = ? AND p.status = 'complete' AND m.status = 'published'",
         [userId]
     )
     return new Set(rows.map((row) => Number(row.module_id)))

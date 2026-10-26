@@ -3,6 +3,7 @@ WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --include=dev
 COPY frontend/index.html frontend/vite.config.js ./
+COPY curriculum-policy.json /build/curriculum-policy.json
 COPY frontend/src ./src
 COPY frontend/public ./public
 RUN npm run build
@@ -13,6 +14,7 @@ WORKDIR /app/backend
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --chown=node:node backend ./
+COPY --chown=node:node curriculum-policy.json /app/curriculum-policy.json
 COPY --from=frontend-build --chown=node:node /build/frontend/dist /app/frontend/dist
 USER node
 EXPOSE 5000

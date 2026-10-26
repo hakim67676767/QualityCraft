@@ -162,18 +162,6 @@ async function requireUnlockedQuiz(req, res, next) {
         if (!rows.length) return res.status(404).json({ message: "Published lesson not found" });
         const { unlocked } = await unlockedModuleIds(req.auth.id);
         if (!unlocked.has(Number(rows[0].module_id))) return res.status(403).json({ message: "Complete earlier modules first" });
-        const [completion] = await db.promise().execute(
-            "SELECT completion_id FROM `lesson_completion` WHERE user_id = ? AND lesson_id = ? LIMIT 1",
-            [req.auth.id, lessonId]
-        );
-        if (!completion.length) return res.status(403).json({ message: "Complete this lesson before taking its quiz" });
-        const [requiredActivities] = await db.promise().execute(
-            `SELECT a.activity_id FROM \`activity\` a
-             LEFT JOIN \`activity_submission\` s ON s.activity_id = a.activity_id AND s.user_id = ?
-             WHERE a.lesson_id = ? AND a.is_required = TRUE AND s.submission_id IS NULL`,
-            [req.auth.id, lessonId]
-        );
-        if (requiredActivities.length) return res.status(403).json({ message: "Submit every required practical activity before taking this quiz" });
         req.moduleId = Number(rows[0].module_id);
         next();
     } catch (error) { next(error); }
@@ -335,11 +323,11 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
             [req.auth.id]
         );
         const [progress] = await db.promise().execute(
-            "SELECT p.progress_id, p.module_id, m.title, p.status, p.percent_complete FROM progress p JOIN `module` m ON m.module_id = p.module_id WHERE p.user_id = ? ORDER BY p.module_id",
+            "SELECT p.progress_id, p.module_id, m.title, p.status, p.percent_complete FROM progress p JOIN `module` m ON m.module_id = p.module_id WHERE p.user_id = ? AND m.status = 'published' ORDER BY m.sequence_no, m.module_id",
             [req.auth.id]
         );
         const [surveys] = await db.promise().execute(
-            "SELECT response_id, phase, score, rating_mean, ratings, submitted_at FROM `survey_response` WHERE user_id = ? ORDER BY submitted_at DESC",
+            "SELECT response_id, phase, score, rating_mean, ratings, submitted_at FROM `survey_response` WHERE user_id = ? ORDER BY submitted_at DESC, response_id DESC",
             [req.auth.id]
         );
         const [badges] = await db.promise().execute(
@@ -347,7 +335,7 @@ app.get("/api/dashboard", requireAuth, async (req, res) => {
             [req.auth.id]
         );
         const [attempts] = await db.promise().execute(
-            "SELECT qa.attempt_id, qa.lesson_id, l.title AS lesson_title, qa.score, qa.completed_at FROM `quiz_attempt` qa JOIN `lesson` l ON l.lesson_id = qa.lesson_id WHERE qa.user_id = ? ORDER BY qa.completed_at DESC, qa.attempt_id DESC",
+            "SELECT qa.attempt_id, qa.lesson_id, l.title AS lesson_title, qa.score, qa.completed_at FROM `quiz_attempt` qa JOIN `lesson` l ON l.lesson_id = qa.lesson_id JOIN `module` m ON m.module_id = l.module_id WHERE qa.user_id = ? AND m.status = 'published' ORDER BY qa.completed_at DESC, qa.attempt_id DESC",
             [req.auth.id]
         );
         const [users] = await db.promise().execute(

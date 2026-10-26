@@ -21,3 +21,6 @@ dist/
 *.pfx
 .DS_Store
 Thumbs.db
+
+# Local design tool state (snapshots, question rolls, seed salt) — not app source.
+.impeccable/

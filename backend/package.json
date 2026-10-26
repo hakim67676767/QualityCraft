@@ -4,12 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node tests/api.test.js && node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js && node check-sql.cjs",
+    "test": "node tests/api.test.js && node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js tests/learningPolicy.test.js && node check-sql.cjs",
     "start": "node server.js",
     "migrate": "node migrations/run.js",
     "setup": "node scripts/setup.js",
     "admin:create": "node scripts/create-admin.js",
-    "test:unit": "node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js && node check-sql.cjs",
+    "test:unit": "node lib/reporting.test.js && node --test --test-isolation=none tests/researchService.test.js tests/understandingSurvey.test.js tests/config.test.js tests/learningPolicy.test.js && node check-sql.cjs",
     "test:db": "node scripts/smoke-db.js"
   },
   "keywords": [],

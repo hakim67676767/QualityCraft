@@ -21,7 +21,7 @@ const PROGRESS_COLUMNS = `
     (SELECT COUNT(*) FROM progress p JOIN \`module\` m ON m.module_id = p.module_id AND m.status = 'published' WHERE p.user_id = u.user_id AND p.status = 'complete') AS completed_modules,
     (SELECT COUNT(*) FROM \`module\` WHERE status = 'published') AS total_modules,
     (SELECT ROUND(AVG(best.score), 2) FROM
-        (SELECT user_id, lesson_id, MAX(score) AS score FROM \`quiz_attempt\` GROUP BY user_id, lesson_id) best
+        (SELECT qa.user_id, qa.lesson_id, MAX(qa.score) AS score FROM \`quiz_attempt\` qa JOIN \`lesson\` l ON l.lesson_id = qa.lesson_id JOIN \`module\` m ON m.module_id = l.module_id AND m.status = 'published' GROUP BY qa.user_id, qa.lesson_id) best
         WHERE best.user_id = u.user_id) AS quiz_average,
     (SELECT COUNT(*) FROM \`quiz_attempt\` qa WHERE qa.user_id = u.user_id) AS quiz_attempts,
     (SELECT MAX(qa.score) FROM \`quiz_attempt\` qa WHERE qa.user_id = u.user_id) AS best_quiz_score,
@@ -32,11 +32,11 @@ const PROGRESS_COLUMNS = `
         WHERE a.is_required = TRUE
           AND NOT EXISTS (SELECT 1 FROM \`activity_submission\` s WHERE s.activity_id = a.activity_id AND s.user_id = u.user_id)) AS activities_outstanding,
     (SELECT COUNT(*) FROM \`activity_submission\` s WHERE s.user_id = u.user_id AND s.status = 'reviewed') AS activities_reviewed,
-    (SELECT sr.score FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'pre' ORDER BY sr.submitted_at DESC LIMIT 1) AS pre_score,
-    (SELECT sr.score FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' ORDER BY sr.submitted_at DESC LIMIT 1) AS post_score,
-    (SELECT sr.rating_mean FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'pre' LIMIT 1) AS pre_rating_mean,
-    (SELECT sr.rating_mean FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' LIMIT 1) AS post_rating_mean,
-    (SELECT sr.submitted_at FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' ORDER BY sr.submitted_at DESC LIMIT 1) AS post_submitted_at,
+    (SELECT sr.score FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'pre' ORDER BY sr.submitted_at DESC, sr.response_id DESC LIMIT 1) AS pre_score,
+    (SELECT sr.score FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' ORDER BY sr.submitted_at DESC, sr.response_id DESC LIMIT 1) AS post_score,
+    (SELECT sr.rating_mean FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'pre' ORDER BY sr.submitted_at DESC, sr.response_id DESC LIMIT 1) AS pre_rating_mean,
+    (SELECT sr.rating_mean FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' ORDER BY sr.submitted_at DESC, sr.response_id DESC LIMIT 1) AS post_rating_mean,
+    (SELECT sr.submitted_at FROM \`survey_response\` sr WHERE sr.user_id = u.user_id AND sr.phase = 'post' ORDER BY sr.submitted_at DESC, sr.response_id DESC LIMIT 1) AS post_submitted_at,
     (SELECT COUNT(*) FROM \`user_badge\` ub WHERE ub.user_id = u.user_id) AS badge_count`
 
 // Optional classroom scoping. Teachers should only report on their own students
@@ -164,10 +164,8 @@ const CSV_COLUMNS = [
     { header: "Activities submitted", value: (row) => row.activitySubmissions },
     { header: "Activities outstanding", value: (row) => row.activitiesOutstanding },
     { header: "Feedback status", value: (row) => row.feedbackStatus },
-    { header: "Pre-test", value: (row) => (row.preScore == null ? "" : `${row.preScore}%`) },
-    { header: "Post-test", value: (row) => (row.postScore == null ? "" : `${row.postScore}%`) },
-    { header: "Pre-survey understanding (1-5)", value: (row) => row.preRatingMean ?? "" },
-    { header: "Post-survey understanding (1-5)", value: (row) => row.postRatingMean ?? "" },
+    { header: "Pre-test score", value: (row) => formatScore(row.preScore, row.preRatingMean) },
+    { header: "Post-test score", value: (row) => formatScore(row.postScore, row.postRatingMean) },
     { header: "Improvement", value: (row) => (row.improvement == null ? "" : row.improvement) },
     { header: "Badges", value: (row) => row.badgeCount },
     { header: "XP", value: (row) => row.xpPoints },
@@ -209,8 +207,8 @@ function streamProgressPdf(rows, { title = "QualityCraft student progress", gene
         document.moveDown(0.2)
         const summary = [
             `Students: ${analytics.studentCount}`,
-            `Average pre-test: ${formatPercent(analytics.averagePreScore)}`,
-            `Average post-test: ${formatPercent(analytics.averagePostScore)}`,
+            `Average pre-test: ${analytics.averagePreScore == null ? 'n/a' : `${analytics.averagePreScore}/5`}`,
+            `Average post-test: ${analytics.averagePostScore == null ? 'n/a' : `${analytics.averagePostScore}/5`}`,
             `Pre-survey understanding: ${analytics.averagePreUnderstanding == null ? 'n/a' : `${analytics.averagePreUnderstanding}/5`}`,
             `Post-survey understanding: ${analytics.averagePostUnderstanding == null ? 'n/a' : `${analytics.averagePostUnderstanding}/5`}`,
             `Average improvement: ${analytics.averageImprovement == null ? "n/a" : analytics.averageImprovement}`,
@@ -230,8 +228,8 @@ function streamProgressPdf(rows, { title = "QualityCraft student progress", gene
         { header: "Quiz avg", width: 58, value: (row) => formatPercent(row.quizAverage) },
         { header: "Activities", width: 60, value: (row) => row.activitySubmissions },
         { header: "Feedback", width: 110, value: (row) => row.feedbackStatus },
-        { header: "Pre", width: 44, value: (row) => row.preRatingMean == null ? formatPercent(row.preScore) : `${row.preRatingMean}/5` },
-        { header: "Post", width: 44, value: (row) => row.postRatingMean == null ? formatPercent(row.postScore) : `${row.postRatingMean}/5` },
+        { header: "Pre", width: 44, value: (row) => formatScore(row.preScore, row.preRatingMean) },
+        { header: "Post", width: 44, value: (row) => formatScore(row.postScore, row.postRatingMean) },
         { header: "XP", width: 50, value: (row) => row.xpPoints },
         { header: "Badges", width: 46, value: (row) => row.badgeCount },
     ]
@@ -274,6 +272,14 @@ function streamProgressPdf(rows, { title = "QualityCraft student progress", gene
 
 function formatPercent(value) {
     return value == null ? "-" : `${value}%`
+}
+
+// A survey (rating) response stores its 1–5 mean in `score`, while a knowledge
+// check stores a 0–100 percentage. Both are reported as a single raw score:
+// the presence of a rating_mean tells us the raw score is on the 1–5 scale.
+function formatScore(score, ratingMean) {
+    if (ratingMean != null) return `${ratingMean}/5`
+    return formatPercent(score)
 }
 
 module.exports = {

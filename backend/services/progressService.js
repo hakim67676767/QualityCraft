@@ -1,17 +1,9 @@
-// Computes a student's progress through a module from the underlying evidence:
-// a completed lesson, practical activity submissions, and the best quiz score.
-//
-// A lesson is worth 100 points:
-//   20 points for completing the lesson
-//   30 points for submitting its required practical activity (free if none required)
-//   50 points for its best quiz score, scaled from the 0-100 quiz result
-// A module is complete when every lesson reaches 100 points.
-
+// A quiz score of at least 50% completes a lesson. Reading and practical work are optional.
 const db = require("../db")
-
-const LESSON_WEIGHT = 20
-const ACTIVITY_WEIGHT = 30
-const QUIZ_WEIGHT = 50
+const { policy, scoreLesson } = require('../lib/learningPolicy')
+const LESSON_WEIGHT = policy.lessonWeight
+const ACTIVITY_WEIGHT = 0
+const QUIZ_WEIGHT = policy.quizWeight
 const COMPLETE_THRESHOLD = 100
 
 async function loadLessonEvidence(userId, lessonId) {
@@ -36,24 +28,6 @@ async function loadLessonEvidence(userId, lessonId) {
     )
 
     return { lessonCompleted: completionRows.length > 0, activityRows, bestQuizScore: Number(quizRows[0]?.best_score || 0) }
-}
-
-function scoreLesson(lessonCompleted, activityRows, bestQuizScore) {
-    const requiredActivities = activityRows.filter((row) => row.is_required)
-    const allRequiredSubmitted = requiredActivities.length === 0
-        ? true
-        : requiredActivities.every((row) => row.submission_id !== null)
-
-    const activityPoints = allRequiredSubmitted ? ACTIVITY_WEIGHT : 0
-    const quizPoints = (QUIZ_WEIGHT * Math.min(100, Math.max(0, bestQuizScore))) / 100
-    const lessonPoints = lessonCompleted ? LESSON_WEIGHT : 0
-
-    return {
-        lessonCompleted,
-        activitySubmitted: allRequiredSubmitted,
-        bestQuizScore,
-        percent: Math.round((lessonPoints + activityPoints + quizPoints) * 100) / 100,
-    }
 }
 
 function statusFor(percentComplete) {
@@ -89,8 +63,9 @@ async function recalculateModuleProgress(userId, moduleId) {
         lessonStates.push({ lessonId: lesson.lesson_id, ...scoreLesson(lessonCompleted, activityRows, bestQuizScore) })
     }
 
-    const percentComplete = lessonStates.length
-        ? Math.round((lessonStates.reduce((total, lesson) => total + lesson.percent, 0) / lessonStates.length) * 100) / 100
+    const allComplete = lessonStates.length > 0 && lessonStates.every((lesson) => lesson.quizPassed)
+    const percentComplete = allComplete ? 100 : lessonStates.length
+        ? Math.min(99.99, Math.round((lessonStates.reduce((total, lesson) => total + lesson.percent, 0) / lessonStates.length) * 100) / 100)
         : 0
 
     const status = statusFor(percentComplete)

@@ -8,18 +8,22 @@ import './understanding-survey.css'
 import ContentAdmin from './ContentAdmin'
 import GamificationAdmin from './GamificationAdmin'
 import Monitoring from './Monitoring'
-import ResearchAdmin from './ResearchAdmin'
 import TeacherAssignments from './TeacherAssignments'
 import BadgesView from './BadgesView'
 import SurveyResults from './SurveyResults'
 import PostTestView from './PostTestView'
 import ProfileView from './ProfileView'
+import StudentGuide from './StudentGuide'
 import ProgressView from './ProgressView'
 import LearningPath from './LearningPath'
 import ClassesView from './ClassesView'
 import { api } from './lib/api'
 import { readQuestionOptions } from './lib/questions'
-import { CraftIcon as StreamlineIcon, StudentOverview, TesterMascot } from './StudentExperience'
+import { CraftIcon as StreamlineIcon, StudentOverview } from './StudentExperience'
+import { EntryFeatures, QualityMark, StudentLoading, StudentVisuals, TestingPreview } from './StudentVisuals'
+import './student-redesign.css'
+import './staff-redesign.css'
+import './technology-theme.css'
 
 const navigation = [
   { id: 'overview', label: 'Dashboard', icon: 'dashboard.svg' },
@@ -38,6 +42,7 @@ const roleChoices = [
 
 function Dashboard({ user, onLogout }) {
   const [activeView, setActiveView] = useState('overview')
+  const [guideOpen, setGuideOpen] = useState(null)
   const [dashboardLoading, setDashboardLoading] = useState(true)
   const [journeyLoaded, setJourneyLoaded] = useState(user.role !== 'student')
   const [questions, setQuestions] = useState([])
@@ -55,10 +60,30 @@ function Dashboard({ user, onLogout }) {
   const [retakeError, setRetakeError] = useState('')
   const [retakeMessage, setRetakeMessage] = useState('')
   const rewardAudioContext = useRef(null)
+  const previousView = useRef(activeView)
+  useEffect(() => {
+    if (previousView.current !== activeView) {
+      document.getElementById('workspace-title')?.focus()
+      window.scrollTo(0, 0)
+    }
+    previousView.current = activeView
+  }, [activeView, user.role])
   const staffNavigation = navigation.filter((item) => ['overview', 'classes'].includes(item.id))
   const roleNavigation = user.role === 'student' ? [...navigation, { id: 'post-test', label: 'Post-test', icon: 'quiz.svg' }, { id: 'profile', label: 'Profile', icon: 'profile.svg' }] : user.role === 'administrator' ? [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'management', label: 'Manage Content', icon: 'learning.svg' }, { id: 'gamification', label: 'XP & Badges', icon: 'badges.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }] : [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }]
-  const adminNavigation = user.role === 'administrator' ? [...roleNavigation, { id: 'users', label: 'Manage Users', icon: 'profile.svg' }, { id: 'research', label: 'Research & Evidence', icon: 'progress.svg' }] : roleNavigation
-  const activeLabel = activeView === 'survey-retake' ? `Retake ${surveyRetake?.phase === 'pre' ? 'pre-test' : 'post-test'} survey` : needsClass && user.role === 'student' && activeView !== 'overview' ? 'Classes' : adminNavigation.find((item) => item.id === activeView)?.label
+  const adminNavigation = user.role === 'administrator' ? [...roleNavigation, { id: 'users', label: 'Manage Users', icon: 'profile.svg' }] : roleNavigation
+  const hasLearningProgress = questions.some((item) => Number(item.lesson_completed) === 1) || (dashboardData.attempts || []).length > 0 || dashboardData.progress.some((item) => Number(item.percent_complete) > 0 || item.status === 'complete')
+  const guideExpanded = guideOpen ?? !hasLearningProgress
+  const isNavigationLocked = (id) => user.role === 'student' && (needsClass ? !['overview', 'classes'].includes(id) : !preTestComplete && id !== 'overview')
+  function continueGettingStarted(target) {
+    setGuideOpen(false)
+    setActiveView(target === 'pre-test' ? 'overview' : target)
+    requestAnimationFrame(() => {
+      const destination = target === 'classes' ? document.getElementById('class-search') : target === 'pre-test' ? document.getElementById('student-pretest-title') : document.getElementById('workspace-title')
+      destination?.focus()
+      destination?.scrollIntoView({ block: 'start' })
+    })
+  }
+  const activeLabel = user.role === 'student' && !needsClass && !preTestComplete ? 'Pre-test' : user.role === 'student' && needsClass && activeView === 'overview' ? 'Getting started' : activeView === 'survey-retake' ? `Retake ${surveyRetake?.phase === 'pre' ? 'pre-test' : 'post-test'} survey` : needsClass && user.role === 'student' && activeView !== 'overview' ? 'Classes' : adminNavigation.find((item) => item.id === activeView)?.label
 
   async function startSurveyRetake(phase) {
     setRetakeLoading(phase)
@@ -157,6 +182,8 @@ function Dashboard({ user, onLogout }) {
     } catch (loadError) {
       setQuestionsError(loadError.message)
     }
+    setGuideOpen(false)
+    setActiveView('modules')
   }
 
   useEffect(() => {
@@ -222,35 +249,35 @@ function Dashboard({ user, onLogout }) {
     }
   }
 
-  if (dashboardLoading || !journeyLoaded) return <main className="auth-shell"><section className="auth-card"><div className="brand-mark"><StreamlineIcon name="shield.svg" /></div><h1>Loading QualityCraft…</h1><p className="intro">Getting your workspace ready.</p></section></main>
+  if (dashboardLoading || !journeyLoaded) return <StudentLoading workspace />
 
   return (
-    <main className={user.role === 'student' ? 'app-shell' : 'app-shell staff-workspace'} onPointerDownCapture={unlockRewardSound} onKeyDownCapture={unlockRewardSound}>
+    <main className={user.role === 'student' ? 'app-shell student-workspace' : 'app-shell staff-workspace'} onPointerDownCapture={unlockRewardSound} onKeyDownCapture={unlockRewardSound}>
       <a className="skip-link" href="#workspace-content">Skip to workspace</a>
       <aside className="app-sidebar">
         <div className="sidebar-brand">
-          <div className="brand-mark"><StreamlineIcon name="shield.svg" /></div>
+          <div className="brand-mark"><QualityMark /></div>
           <div>
             <strong>QualityCraft</strong>
             <span>Learn Software Testing</span>
           </div>
         </div>
-        {user.role === 'student' && <div className="sidebar-xp"><div><strong>Level {Math.floor(Number(dashboardData.xpPoints || 0) / 500) + 1} · Quality Learner</strong><span>⚡ {dashboardData.xpPoints || 0} XP</span></div><progress max="500" value={Number(dashboardData.xpPoints || 0) % 500} /><small>{journey?.completedModuleIds?.length || 0} of {journey?.moduleIds?.length || 0} modules complete</small></div>}
+        {user.role === 'student' && <div className="sidebar-xp"><div><strong>Level {Math.floor(Number(dashboardData.xpPoints || 0) / 500) + 1} · Quality Learner</strong><span>{dashboardData.xpPoints || 0} XP</span></div><progress max="500" value={Number(dashboardData.xpPoints || 0) % 500} aria-label="XP progress toward the next level" /><small>{journey?.completedModuleIds?.length || 0} of {journey?.moduleIds?.length || 0} modules complete</small></div>}
         <span className="workspace-menu-label">YOUR WORKSPACE</span>
         <nav className="app-nav" aria-label="Workspace navigation">
           {adminNavigation.map((item) => (
             <button
               type="button"
-              className={needsClass && user.role === 'student' && item.id !== 'classes' && item.id !== 'overview' ? 'nav-item locked' : activeView === item.id ? 'nav-item active' : 'nav-item'}
-              onClick={() => { if (!needsClass || item.id === 'classes' || item.id === 'overview') setActiveView(item.id) }}
-              aria-disabled={needsClass && user.role === 'student' && item.id !== 'classes' && item.id !== 'overview'}
+              className={isNavigationLocked(item.id) ? 'nav-item locked' : activeView === item.id ? 'nav-item active' : 'nav-item'}
+              onClick={() => { if (!isNavigationLocked(item.id)) setActiveView(item.id) }}
+              aria-disabled={isNavigationLocked(item.id)}
               aria-current={activeView === item.id ? 'page' : undefined}
-              title={needsClass && user.role === 'student' && item.id !== 'classes' && item.id !== 'overview' ? 'Join a class to unlock' : undefined}
+              title={isNavigationLocked(item.id) ? needsClass ? 'Join a class to unlock' : 'Complete your pre-test to unlock' : undefined}
               key={item.id}
             >
               <span className="nav-icon"><StreamlineIcon name={item.icon.endsWith('.svg') ? item.icon : 'dashboard.svg'} /></span>
               <span>{item.label}</span>
-              {needsClass && user.role === 'student' && item.id !== 'classes' && item.id !== 'overview' && <span className="nav-lock" aria-hidden="true">&#128274;</span>}
+              {isNavigationLocked(item.id) && <span className="nav-lock" aria-hidden="true"><StreamlineIcon name="lock.svg" /></span>}
             </button>
           ))}
         </nav>
@@ -260,7 +287,7 @@ function Dashboard({ user, onLogout }) {
             <span className="avatar">{user.name.charAt(0).toUpperCase()}</span>
             <span><strong>{user.name}</strong><small>{user.email}</small></span>
           </div>
-          <button type="button" className="logout-button" onClick={onLogout}>↪ <span>Sign Out</span></button>
+          <button type="button" className="logout-button" onClick={onLogout}>{user.role === 'student' ? <StreamlineIcon name="signout.svg" /> : '↪'} <span>Sign Out</span></button>
         </div>
       </aside>
 
@@ -268,13 +295,13 @@ function Dashboard({ user, onLogout }) {
         <header className="workspace-header">
           <div>
             <span className="eyebrow">{user.role === 'administrator' ? 'Admin workspace' : `${user.role} workspace`}</span>
-            <h1>{activeLabel}</h1>
-            {activeView === 'overview' && user.role === 'student' && <p className="workspace-subtitle">A fresh chance to learn something great.</p>}
+            <h1 id="workspace-title" tabIndex={-1}>{activeLabel}</h1>
+            {activeView === 'overview' && user.role === 'student' && !needsClass && preTestComplete && <p className="workspace-subtitle">A fresh chance to learn something great.</p>}
           </div>
-          <div className="header-status">{user.role === 'student' && <span className="header-level">✦ Level {Math.floor(Number(dashboardData.xpPoints || 0) / 500) + 1}</span>}<span className="header-avatar">{user.name.charAt(0).toUpperCase()}</span><span className="header-user-name">{user.name}</span><button type="button" className="mobile-signout" onClick={onLogout}>Sign out</button></div>
+          <div className="header-status">{user.role === 'student' && <button type="button" id="student-guide-launch" className="student-guide-launch" aria-expanded={guideExpanded} aria-controls="student-guide-details" onClick={() => { setGuideOpen(true); requestAnimationFrame(() => document.getElementById('student-guide-title')?.focus()) }}>Getting started</button>}{user.role === 'student' && <span className="header-level"><StreamlineIcon name="progress.svg" /> Level {Math.floor(Number(dashboardData.xpPoints || 0) / 500) + 1}</span>}<span className="header-avatar">{user.name.charAt(0).toUpperCase()}</span><span className="header-user-name">{user.name}</span><button type="button" className="mobile-signout" onClick={onLogout}>Sign out</button></div>
         </header>
 
-        {needsClass && activeView === 'overview' && <Overview data={dashboardData} questions={questions} journey={journey} onNavigate={setActiveView} user={user} />}
+        {user.role === 'student' && <StudentGuide user={user} needsClass={needsClass} preTestComplete={preTestComplete} hasLearningProgress={hasLearningProgress} expanded={guideExpanded} visible={!hasLearningProgress || guideOpen === true} onToggle={() => { setGuideOpen(!guideExpanded); if (hasLearningProgress && guideExpanded) document.getElementById('student-guide-launch')?.focus() }} onContinue={continueGettingStarted} error={!journey ? questionsError : ''} />}
         {needsClass && activeView === 'classes' && <ClassesView user={user} onJoined={handleClassJoined} onNavigate={setActiveView} />}
         {!needsClass && !preTestComplete && <PreTestView questions={preTestQuestions} onComplete={handlePreTestComplete} />}
         {!needsClass && preTestComplete && activeView === 'overview' && (user.role === 'student' ? <Overview data={dashboardData} questions={questions} journey={journey} onNavigate={setActiveView} user={user} /> : <StaffOverview role={user.role} onNavigate={setActiveView} />)}
@@ -291,7 +318,6 @@ function Dashboard({ user, onLogout }) {
         {activeView === 'monitoring' && <Monitoring />}
         {activeView === 'assignments' && user.role !== 'student' && <TeacherAssignments />}
         {activeView === 'users' && <UsersView />}
-        {activeView === 'research' && user.role === 'administrator' && <ResearchAdmin />}
       </section>
       {rewardNotice && <div className="reward-notification" role="status" aria-live="polite">
         <span className="reward-notification-icon" aria-hidden="true">🎉</span>
@@ -347,7 +373,7 @@ function PreTestView({ questions, onComplete, isRetake = false }) {
     }
   }
 
-  return <div className="dashboard-content pre-test-page"><div className="section-intro"><div><span className="eyebrow">Required first step</span><h2>{isRetake ? 'Retake pre-test survey' : isRating ? 'Pre-test survey' : 'Pre-test'}</h2><p>{isRetake ? 'Rate your understanding now. This response is saved separately from your original survey.' : isRating ? 'Before learning, tell us how much you agree with each statement about your understanding of software testing.' : 'Answer these questions before starting the learning modules.'}</p></div><span className="badge-count">{questions.length} {isRating ? 'statements' : 'questions'}</span></div><section className="panel pre-test-panel">{isRating && <p className="understanding-survey-intro">There are no right or wrong answers. Choose one rating for each statement: 1 = Strongly disagree, 2 = Disagree, 3 = Neither agree nor disagree, 4 = Agree, 5 = Strongly agree.</p>}<form onSubmit={submitPreTest}><ol>{questions.map((question) => <li key={question.question_id}><fieldset className="assessment-question"><legend>{question.question_text}</legend><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers({ ...answers, [question.question_id]: value })} /></fieldset></li>)}</ol>{error && <p className="error-message" role="alert">{error}</p>}{result && <p className="quiz-result" role="status">{result.responseType === 'rating' ? 'Pre-test survey complete. Your responses have been saved.' : `Pre-test complete: ${result.score}%`}</p>}<button type="submit" className="primary-small" disabled={submitting || !questions.length || Boolean(result)}>{submitting ? 'Submitting...' : 'Submit pre-test'}</button></form></section></div>
+  return <div className="dashboard-content pre-test-page"><div className="section-intro"><div><span className="eyebrow">Required first step</span><h2 id={isRetake ? undefined : 'student-pretest-title'} tabIndex={-1}>{isRetake ? 'Retake pre-test survey' : isRating ? 'Pre-test survey' : 'Pre-test'}</h2><p>{isRetake ? 'Rate your understanding now. This response is saved separately from your original survey.' : isRating ? 'Before learning, tell us how much you agree with each statement about your understanding of software testing.' : 'Answer these questions before starting the learning modules.'}</p></div><span className="badge-count">{questions.length} {isRating ? 'statements' : 'questions'}</span></div><section className="panel pre-test-panel">{isRating && <p className="understanding-survey-intro">There are no right or wrong answers. Choose one rating for each statement: 1 = Strongly disagree, 2 = Disagree, 3 = Neither agree nor disagree, 4 = Agree, 5 = Strongly agree.</p>}<form onSubmit={submitPreTest}><ol>{questions.map((question) => <li key={question.question_id}><fieldset className="assessment-question"><legend>{question.question_text}</legend><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers({ ...answers, [question.question_id]: value })} /></fieldset></li>)}</ol>{error && <p className="error-message" role="alert">{error}</p>}{result && <p className="quiz-result" role="status">{result.responseType === 'rating' ? 'Pre-test survey complete. Your responses have been saved.' : `Pre-test complete: ${result.score}%`}</p>}<button type="submit" className="primary-small" disabled={submitting || !questions.length || Boolean(result)}>{submitting ? 'Submitting...' : 'Submit pre-test'}</button></form></section></div>
 }
 
 
@@ -431,7 +457,7 @@ function StaffOverview({ role, onNavigate }) {
   if (onNavigate) {
     const isAdmin = role === 'administrator'
     return <div className={`dashboard-content staff-dashboard ${isAdmin ? 'admin-dashboard' : 'teacher-dashboard'}`}>
-      <section className="staff-hero"><div className="staff-hero-copy"><span className="staff-hero-kicker">{isAdmin ? 'Platform control centre' : 'Teaching overview'}</span><h2>{isAdmin ? 'Keep learning organised and moving.' : 'Guide every learner forward.'}</h2><p>{isAdmin ? 'Manage content, people, rewards, and learning outcomes from one clear workspace.' : 'Spot progress, support learners, and review practical work from one place.'}</p><div className="staff-hero-actions"><button type="button" className="staff-primary-action" onClick={() => onNavigate('monitoring')}>Open monitoring <span aria-hidden="true">→</span></button><button type="button" className="staff-secondary-action" onClick={() => onNavigate('classes')}>View classes</button></div></div><div className="staff-hero-visual" aria-hidden="true"><span className="staff-orbit orbit-one" /><span className="staff-orbit orbit-two" /><span className="staff-hero-icon"><StreamlineIcon name={isAdmin ? 'progress.svg' : 'classes.svg'} /></span><span className="staff-mini-card card-one"><strong>{summary?.studentCount ?? '—'}</strong> learners</span><span className="staff-mini-card card-two"><strong>{summary?.activitiesAwaitingReview ?? '—'}</strong> to review</span></div></section>
+      <section className="staff-hero"><div className="staff-hero-copy"><h2>{isAdmin ? 'Keep learning organised and moving.' : 'Guide every learner forward.'}</h2><p>{isAdmin ? 'Manage content, people, rewards, and learning outcomes from one clear workspace.' : 'Spot progress, support learners, and review practical work from one place.'}</p><div className="staff-hero-actions"><button type="button" className="staff-primary-action" onClick={() => onNavigate('monitoring')}>Open monitoring <span aria-hidden="true">→</span></button><button type="button" className="staff-secondary-action" onClick={() => onNavigate('classes')}>View classes</button></div></div><TestingPreview /></section>
       {error && <p className="error-message">{error}</p>}
       {summary ? <div className="metric-grid staff-metrics"><Metric label="Students" value={summary.studentCount} detail="Enrolled learners" tone="blue" /><Metric label="Classes" value={classes.length} detail="Available to you" tone="green" /><Metric label="Average quiz" value={summary.averageQuizScore == null ? '—' : `${summary.averageQuizScore}%`} detail="Highest score per quiz" tone="amber" /><Metric label="Activities to review" value={summary.activitiesAwaitingReview} detail="Student submissions" tone="rose" /></div> : <p className="empty-state">Loading classroom summary…</p>}
       <section className="staff-quick-grid"><button type="button" onClick={() => onNavigate('monitoring')}><span className="staff-quick-icon"><StreamlineIcon name="progress.svg" /></span><span><strong>Review learner progress</strong><small>Scores, completion, feedback, and exports</small></span><span aria-hidden="true">→</span></button><button type="button" onClick={() => onNavigate('classes')}><span className="staff-quick-icon"><StreamlineIcon name="classes.svg" /></span><span><strong>Manage your classes</strong><small>Create classes and see enrolment</small></span><span aria-hidden="true">→</span></button>{isAdmin && <button type="button" onClick={() => onNavigate('management')}><span className="staff-quick-icon"><StreamlineIcon name="learning.svg" /></span><span><strong>Shape the curriculum</strong><small>Edit modules, lessons, quizzes, and activities</small></span><span aria-hidden="true">→</span></button>}{isAdmin && <button type="button" onClick={() => onNavigate('users')}><span className="staff-quick-icon"><StreamlineIcon name="profile.svg" /></span><span><strong>Manage access</strong><small>Create accounts and assign roles</small></span><span aria-hidden="true">→</span></button>}</section>
@@ -455,7 +481,7 @@ function QuestionControl({ question, value, onChange }) {
     return <div className="answer-options">{options.map((option) => <label className="answer-option" key={option}><input type="radio" name={`question-${question.question_id}`} value={option} checked={value === option} onChange={(event) => onChange(event.target.value)} /><span>{option}</span></label>)}</div>
   }
 
-  return <input className="answer-input" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Type your answer" />
+  return <input className="answer-input" aria-label={question.question_text} value={value} onChange={(event) => onChange(event.target.value)} placeholder="Type your answer" />
 }
 
 
@@ -510,30 +536,29 @@ function App() {
     api.post('/api/auth/logout').finally(() => { setUser(null); setSelectedRole(null); setIsRegistering(false) })
   }
 
-  if (restoring) return <main className="auth-shell"><section className="auth-card"><h1>Loading QualityCraft…</h1></section></main>
+  if (restoring) return <StudentLoading />
 
   if (user) {
-    return <Dashboard user={user} onLogout={logout} />
+    return <StudentVisuals><Dashboard user={user} onLogout={logout} /></StudentVisuals>
   }
 
-  if (!selectedRole) return <main className="role-page"><section className="role-hero"><div className="hero-doodle hero-doodle-one" aria-hidden="true">TEST</div><div className="hero-doodle hero-doodle-two" aria-hidden="true">PASS!</div><div className="role-logo"><StreamlineIcon name="shield.svg" /></div><span className="hero-kicker">The software testing learning studio</span><h1>Build with curiosity.<br />Test with confidence.</h1><p>Hands-on lessons that turn quality thinking into a real-world craft.</p><div className="role-tags"><span>Self-paced lessons</span><span>Practical challenges</span><span>Badges & XP</span></div></section><section className="role-list"><div className="role-list-heading"><span>01</span><p className="role-prompt">Choose your workspace</p></div>{roleChoices.map((role) => <button type="button" className={`role-choice role-${role.id}`} key={role.id} onClick={() => { setSelectedRole(role); setIsRegistering(false); setError('') }}><span className="role-icon"><StreamlineIcon name={role.icon} /></span><span className="role-copy"><strong>{role.title}</strong><small>{role.subtitle}</small></span><span className="role-arrow">↗</span></button>)}<p className="role-note">Made for curious Malaysian secondary school students · Form 4 & 5</p></section></main>
+  if (!selectedRole) return <StudentVisuals><main className="role-page qc-entry"><header className="entry-brand"><QualityMark /><span>QualityCraft</span><span className="entry-brand-note">Learn. Test. Level up.</span></header><section className="role-hero"><QualityMark /><h1>QualityCraft</h1><p>Learn software testing. Build quality. Ship confidence.</p><EntryFeatures /></section><section className="role-list" aria-labelledby="workspace-choice"><div className="role-list-heading"><h2 id="workspace-choice">Find your place.</h2><p className="role-prompt">Choose your workspace to get started.</p></div>{roleChoices.map((role) => <button type="button" className={`role-choice role-${role.id}`} key={role.id} onClick={() => { setSelectedRole(role); setIsRegistering(false); setError('') }}><span className="role-icon"><StreamlineIcon name={role.icon} /></span><span className="role-copy"><strong>{role.title}<code aria-hidden="true">{role.id === 'administrator' ? 'admin' : role.id}.exe</code></strong><small>{role.subtitle}</small></span><span className="role-arrow" aria-hidden="true">↗</span></button>)}<p className="role-note">Made for curious Malaysian secondary school students · Form 4 & 5</p></section><footer className="entry-footer"><span>Learn. Test. Level up.</span><span>One small step, every day.</span></footer></main></StudentVisuals>
 
   return (
-    <main className="auth-shell student-auth">
+    <StudentVisuals><main className="auth-shell student-auth qc-entry">
       <header className="auth-topbar"><button type="button" onClick={() => { setSelectedRole(null); setIsRegistering(false); setError(''); setShowPassword(false) }}><span aria-hidden="true">←</span> Back to roles</button><span className="auth-topbar-note">A little curiosity. A lot of possibility.</span></header>
       <div className="auth-layout">
       <section className="auth-story" aria-label="Welcome to QualityCraft">
-        <div className="auth-wordmark"><span className="brand-mark"><StreamlineIcon name="shield.svg" /></span><span>QualityCraft<small>Learn. Test. Level up.</small></span></div>
+        <div className="auth-wordmark"><span className="brand-mark"><QualityMark /></span><span>QualityCraft<small>Learn. Test. Level up.</small></span></div>
         <div className="auth-story-copy"><span className="auth-story-kicker"><span aria-hidden="true">✦</span> BIG SKILLS START SMALL</span><h2>Get curious.<br />Build confidence.<br /><em>Make your mark.</em></h2><p>Discover software testing through real challenges,<br className="desktop-break" /> small wins, and a little adventure.</p></div>
-        <div className="auth-mascot-scene"><span className="auth-floating-chip chip-code">&lt;/&gt; Think like a tester</span><TesterMascot /><span className="auth-floating-chip chip-win"><span aria-hidden="true">✓</span> Great things ahead</span></div>
-        <div className="auth-feature-strip"><div><StreamlineIcon name="learning.svg" /><span>Bite-sized<br /><strong>lessons</strong></span></div><div><StreamlineIcon name="quiz.svg" /><span>Hands-on<br /><strong>challenges</strong></span></div><div><StreamlineIcon name="celebrate.svg" /><span>Well-earned<br /><strong>rewards</strong></span></div></div>
+        <EntryFeatures />
       </section>
       <section className="auth-card student-signin-card">
-        <span className="auth-role-pill"><StreamlineIcon name={selectedRole.icon} />{isRegistering ? 'New student' : `${selectedRole.title} workspace`}</span>
         <h1>{isRegistering ? 'Start something great.' : 'Welcome back.'}<span aria-hidden="true">✦</span></h1>
         <p className="intro">
           {isRegistering ? 'Your testing adventure starts right here. Let’s make it yours.' : 'Your next chapter is waiting. Sign in and pick up where you left off.'}
         </p>
+        <p className="auth-role-context">{isRegistering ? 'Create your student account.' : `Sign in to your ${selectedRole.title.toLowerCase()} workspace.`}</p>
 
         <form onSubmit={submitForm}>
           {isRegistering && (
@@ -561,8 +586,8 @@ function App() {
         <p className="auth-progress-note"><StreamlineIcon name="shield.svg" />Your progress, saved for next time.</p>
       </section>
       </div>
-      <p className="auth-bottom-note">Made for curious minds · Malaysian secondary school students · Form 4 & 5</p>
-    </main>
+      <div className="auth-bottom-note"><span>Made for curious minds.</span><p>Malaysian secondary school students<strong>Form 4 &amp; 5</strong></p></div>
+    </main></StudentVisuals>
   )
 }
 

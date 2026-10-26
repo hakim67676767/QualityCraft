@@ -109,7 +109,7 @@ const gamificationRules = [
     { code: "quiz_submission", name: "Submit a quiz", eventType: "quiz_submission", xp: 10, description: "Base XP for submitting any lesson quiz." },
     { code: "quiz_correct_answer", name: "Correct quiz answer", eventType: "quiz_correct_answer", xp: 2, description: "Awarded per correct answer in a lesson quiz." },
     { code: "activity_submission", name: "Submit a practical activity", eventType: "activity_submission", xp: 20, description: "Awarded once per activity a student submits." },
-    { code: "module_complete", name: "Complete a module", eventType: "module_complete", xp: 30, description: "Awarded when every lesson in a module reaches 100%." },
+    { code: "module_complete", name: "Complete a module", eventType: "module_complete", xp: 30, description: "Awarded when every lesson quiz score is at least 50%. Reading and practical submissions are optional." },
     { code: "post_test_complete", name: "Complete the post-test", eventType: "post_test_complete", xp: 40, description: "Awarded for finishing the final assessment." },
 ]
 

@@ -56,6 +56,11 @@ async function submitAssessment(userId, phase, body) {
   if (isRating && answers.some((answer) => !RATING_OPTIONS.includes(answer))) throw new HttpError(400, 'Choose a rating from 1 to 5 for every statement');
   const graded = isRating ? null : gradeSubmission(questions, answers);
   const rating = isRating ? summariseRatings(questions, answers) : null;
+  // Unified scoring: both pre-test and post-test record a single raw `score`.
+  // For a rating survey the raw score is the mean agreement rating (1–5); for a
+  // knowledge check it is the percentage (0–100). rating_mean is kept as a
+  // parallel column so existing reads keep working during the transition.
+  const score = isRating ? rating.ratingMean : graded.score;
   const connection = await db.promise().getConnection();
   try {
     await connection.beginTransaction();
@@ -67,12 +72,12 @@ async function submitAssessment(userId, phase, body) {
       const [attempts] = await connection.execute('SELECT COALESCE(MAX(assessment_attempt_id), 0) AS latest FROM assessment_attempt WHERE user_id = ? AND phase = ?', [userId, phase]);
       if (Number(attempts[0].latest) !== delivery.lastAttemptId) throw new HttpError(409, 'This retake has already been submitted or a newer response exists. Start a new retake.');
     } else {
-      await connection.execute('INSERT INTO `survey_response` (user_id, phase, score, rating_mean, ratings) VALUES (?, ?, ?, ?, ?)', [userId, phase, graded?.score ?? null, rating?.ratingMean ?? null, rating ? JSON.stringify(rating.ratings) : null]);
+      await connection.execute('INSERT INTO `survey_response` (user_id, phase, score, rating_mean, ratings) VALUES (?, ?, ?, ?, ?)', [userId, phase, score ?? null, rating?.ratingMean ?? null, rating ? JSON.stringify(rating.ratings) : null]);
     }
-    await connection.execute('INSERT INTO `assessment_attempt` (user_id, instrument_id, phase, score, correct_count, total_questions, rating_mean, ratings, is_retake) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [userId, delivery.instrumentId, phase, graded?.score ?? null, graded?.correctAnswers ?? null, questions.length, rating?.ratingMean ?? null, rating ? JSON.stringify(rating.ratings) : null, isRetake]);
+    await connection.execute('INSERT INTO `assessment_attempt` (user_id, instrument_id, phase, score, correct_count, total_questions, rating_mean, ratings, is_retake) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [userId, delivery.instrumentId, phase, score ?? null, graded?.correctAnswers ?? null, questions.length, rating?.ratingMean ?? null, rating ? JSON.stringify(rating.ratings) : null, isRetake]);
     await connection.commit();
   } catch (error) { await connection.rollback(); throw error; } finally { connection.release(); }
-  if (isRating) return { responseType: 'rating', isRetake, ratingMean: rating.ratingMean, totalQuestions: questions.length, message: isRetake ? 'Your survey retake has been saved separately.' : 'Your understanding survey has been recorded.' };
+  if (isRating) return { responseType: 'rating', isRetake, score: rating.ratingMean, ratingMean: rating.ratingMean, totalQuestions: questions.length, message: isRetake ? 'Your survey retake has been saved separately.' : 'Your understanding survey has been recorded.' };
   return phase === 'pre' ? { score: graded.score, correctAnswers: graded.correctAnswers, totalQuestions: graded.totalQuestions } : graded;
 }
 
