@@ -169,7 +169,10 @@ async function main() {
         console.log(`  already present: ${result.skipped.length}`)
         process.exit(0)
     } catch (error) {
-        console.error("MIGRATION FAILED:", error.message)
+        const connectionCodes = error instanceof AggregateError
+            ? [...new Set(error.errors.map((attempt) => attempt.code).filter(Boolean))].join(', ')
+            : ''
+        console.error("MIGRATION FAILED:", error.message || connectionCodes || error.code || error.name)
         process.exit(1)
     }
 }
