@@ -12,12 +12,12 @@ export default function ProfileView({ user, data, journey, onNavigate }) {
   const preDone = Boolean(journey?.preTestDone)
   const postDone = Boolean(journey?.postTestDone)
   const nextView = postDone ? 'surveys' : journey?.allModulesComplete ? 'post-test' : 'modules'
-  const nextLabel = postDone ? 'View survey results' : journey?.allModulesComplete ? 'Open post-test survey' : 'Continue learning'
+  const nextLabel = postDone ? 'View survey results' : journey?.allModulesComplete ? 'Open Post Use survey' : 'Continue learning'
   const steps = [
     { title: 'Join your learning community', description: classes.length ? `${classes.length} ${classes.length === 1 ? 'class joined' : 'classes joined'}` : 'Find the class shared by your teacher.', done: classes.length > 0, view: 'classes', action: 'View classes' },
-    { title: 'Record your starting point', description: preDone ? 'Your original pre-test survey is saved.' : 'Complete your pre-test survey before learning.', done: preDone, view: 'surveys', action: 'View results' },
+    { title: 'Record your starting point', description: preDone ? 'Your original Pre Use survey is saved.' : 'Complete your Pre Use survey before learning.', done: preDone, view: 'surveys', action: 'View results' },
     { title: 'Build your software testing skills', description: `${completed} of ${total} modules complete`, done: total > 0 && completed >= total, view: 'modules', action: 'Open learning path' },
-    { title: 'Reflect on your understanding', description: postDone ? 'Your original post-test survey is saved.' : 'Your post-test opens after all modules are complete.', done: postDone, view: 'post-test', action: 'View post-test' },
+    { title: 'Reflect on your understanding', description: postDone ? 'Your original Post Use survey is saved.' : 'Your Post Use opens after all modules are complete.', done: postDone, view: 'post-test', action: 'View Post Use' },
   ]
   const nextStep = steps.findIndex((step) => !step.done)
   const latestBadge = [...data.badges].sort((a, b) => (Date.parse(b.awarded_at) || 0) - (Date.parse(a.awarded_at) || 0))[0]

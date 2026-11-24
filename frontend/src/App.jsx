@@ -69,7 +69,7 @@ function Dashboard({ user, onLogout }) {
     previousView.current = activeView
   }, [activeView, user.role])
   const staffNavigation = navigation.filter((item) => ['overview', 'classes'].includes(item.id))
-  const roleNavigation = user.role === 'student' ? [...navigation, { id: 'post-test', label: 'Post-test', icon: 'quiz.svg' }, { id: 'profile', label: 'Profile', icon: 'profile.svg' }] : user.role === 'administrator' ? [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'management', label: 'Manage Content', icon: 'learning.svg' }, { id: 'gamification', label: 'XP & Badges', icon: 'badges.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }] : [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }]
+  const roleNavigation = user.role === 'student' ? [...navigation, { id: 'post-test', label: 'Post Use', icon: 'quiz.svg' }, { id: 'profile', label: 'Profile', icon: 'profile.svg' }] : user.role === 'administrator' ? [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'management', label: 'Manage Content', icon: 'learning.svg' }, { id: 'gamification', label: 'XP & Badges', icon: 'badges.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }] : [...staffNavigation, { id: 'assignments', label: 'Assignments', icon: 'quiz.svg' }, { id: 'monitoring', label: 'Monitoring', icon: 'progress.svg' }]
   const adminNavigation = user.role === 'administrator' ? [...roleNavigation, { id: 'users', label: 'Manage Users', icon: 'profile.svg' }] : roleNavigation
   const hasLearningProgress = questions.some((item) => Number(item.lesson_completed) === 1) || (dashboardData.attempts || []).length > 0 || dashboardData.progress.some((item) => Number(item.percent_complete) > 0 || item.status === 'complete')
   const guideExpanded = guideOpen ?? !hasLearningProgress
@@ -83,7 +83,7 @@ function Dashboard({ user, onLogout }) {
       destination?.scrollIntoView({ block: 'start' })
     })
   }
-  const activeLabel = user.role === 'student' && !needsClass && !preTestComplete ? 'Pre-test' : user.role === 'student' && needsClass && activeView === 'overview' ? 'Getting started' : activeView === 'survey-retake' ? `Retake ${surveyRetake?.phase === 'pre' ? 'pre-test' : 'post-test'} survey` : needsClass && user.role === 'student' && activeView !== 'overview' ? 'Classes' : adminNavigation.find((item) => item.id === activeView)?.label
+  const activeLabel = user.role === 'student' && !needsClass && !preTestComplete ? 'Pre Use' : user.role === 'student' && needsClass && activeView === 'overview' ? 'Getting started' : activeView === 'survey-retake' ? `Retake ${surveyRetake?.phase === 'pre' ? 'Pre Use' : 'Post Use'} survey` : needsClass && user.role === 'student' && activeView !== 'overview' ? 'Classes' : adminNavigation.find((item) => item.id === activeView)?.label
 
   async function startSurveyRetake(phase) {
     setRetakeLoading(phase)
@@ -213,14 +213,14 @@ function Dashboard({ user, onLogout }) {
             const totalModules = new Set(moduleRows.map((question) => question.module_id)).size
             const completedModules = data.progress.filter((item) => item.status === 'complete').length
             if (user.role === 'student' && totalModules > 0 && completedModules >= totalModules) {
-              return fetch('/api/post-test', { headers }).then((postResponse) => { if (!postResponse.ok) throw new Error('Unable to load post-test'); return postResponse.json() }).then(setPostTestQuestions)
+              return fetch('/api/post-test', { headers }).then((postResponse) => { if (!postResponse.ok) throw new Error('Unable to load Post Use'); return postResponse.json() }).then(setPostTestQuestions)
             }
             return null
           })
         }
         if (user.role !== 'student') return null
         return fetch('/api/pre-test', { headers: {  } })
-          .then((response) => { if (!response.ok) throw new Error('Unable to load pre-test'); return response.json() })
+          .then((response) => { if (!response.ok) throw new Error('Unable to load Pre Use'); return response.json() })
           .then(setPreTestQuestions)
       })
       .catch((error) => { setQuestionsError(error.message); setJourneyLoaded(true) })
@@ -235,7 +235,7 @@ function Dashboard({ user, onLogout }) {
         fetch('/api/dashboard', { headers }),
         fetch('/api/pre-test', { headers }),
       ])
-      if (!dashboardResponse.ok || !preTestResponse.ok) throw new Error('Unable to load the pre-test')
+      if (!dashboardResponse.ok || !preTestResponse.ok) throw new Error('Unable to load the Pre Use')
       const dashboard = await dashboardResponse.json()
       const preTest = await preTestResponse.json()
       setDashboardData(dashboard)
@@ -272,7 +272,7 @@ function Dashboard({ user, onLogout }) {
               onClick={() => { if (!isNavigationLocked(item.id)) setActiveView(item.id) }}
               aria-disabled={isNavigationLocked(item.id)}
               aria-current={activeView === item.id ? 'page' : undefined}
-              title={isNavigationLocked(item.id) ? needsClass ? 'Join a class to unlock' : 'Complete your pre-test to unlock' : undefined}
+              title={isNavigationLocked(item.id) ? needsClass ? 'Join a class to unlock' : 'Complete your Pre Use to unlock' : undefined}
               key={item.id}
             >
               <span className="nav-icon"><StreamlineIcon name={item.icon.endsWith('.svg') ? item.icon : 'dashboard.svg'} /></span>
@@ -363,7 +363,7 @@ function PreTestView({ questions, onComplete, isRetake = false }) {
     try {
       const response = await fetch('/api/pre-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assessmentToken: questions[0]?.assessmentToken, answers: questions.map((question) => answers[question.question_id]) }) })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Unable to submit pre-test')
+      if (!response.ok) throw new Error(data.message || 'Unable to submit Pre Use')
       setResult(data)
       setTimeout(() => onComplete(data), 900)
     } catch (submitError) {
@@ -373,7 +373,7 @@ function PreTestView({ questions, onComplete, isRetake = false }) {
     }
   }
 
-  return <div className="dashboard-content pre-test-page"><div className="section-intro"><div><span className="eyebrow">Required first step</span><h2 id={isRetake ? undefined : 'student-pretest-title'} tabIndex={-1}>{isRetake ? 'Retake pre-test survey' : isRating ? 'Pre-test survey' : 'Pre-test'}</h2><p>{isRetake ? 'Rate your understanding now. This response is saved separately from your original survey.' : isRating ? 'Before learning, tell us how much you agree with each statement about your understanding of software testing.' : 'Answer these questions before starting the learning modules.'}</p></div><span className="badge-count">{questions.length} {isRating ? 'statements' : 'questions'}</span></div><section className="panel pre-test-panel">{isRating && <p className="understanding-survey-intro">There are no right or wrong answers. Choose one rating for each statement: 1 = Strongly disagree, 2 = Disagree, 3 = Neither agree nor disagree, 4 = Agree, 5 = Strongly agree.</p>}<form onSubmit={submitPreTest}><ol>{questions.map((question) => <li key={question.question_id}><fieldset className="assessment-question"><legend>{question.question_text}</legend><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers({ ...answers, [question.question_id]: value })} /></fieldset></li>)}</ol>{error && <p className="error-message" role="alert">{error}</p>}{result && <p className="quiz-result" role="status">{result.responseType === 'rating' ? 'Pre-test survey complete. Your responses have been saved.' : `Pre-test complete: ${result.score}%`}</p>}<button type="submit" className="primary-small" disabled={submitting || !questions.length || Boolean(result)}>{submitting ? 'Submitting...' : 'Submit pre-test'}</button></form></section></div>
+  return <div className="dashboard-content pre-test-page"><div className="section-intro"><div><span className="eyebrow">Required first step</span><h2 id={isRetake ? undefined : 'student-pretest-title'} tabIndex={-1}>{isRetake ? 'Retake Pre Use survey' : isRating ? 'Pre Use survey' : 'Pre Use'}</h2><p>{isRetake ? 'Rate your understanding now. This response is saved separately from your original survey.' : isRating ? 'Before learning, tell us how much you agree with each statement about your understanding of software testing.' : 'Answer these questions before starting the learning modules.'}</p></div><span className="badge-count">{questions.length} {isRating ? 'statements' : 'questions'}</span></div><section className="panel pre-test-panel">{isRating && <p className="understanding-survey-intro">There are no right or wrong answers. Choose one rating for each statement: 1 = Strongly disagree, 2 = Disagree, 3 = Neither agree nor disagree, 4 = Agree, 5 = Strongly agree.</p>}<form onSubmit={submitPreTest}><ol>{questions.map((question) => <li key={question.question_id}><fieldset className="assessment-question"><legend>{question.question_text}</legend><QuestionControl question={question} value={answers[question.question_id] || ''} onChange={(value) => setAnswers({ ...answers, [question.question_id]: value })} /></fieldset></li>)}</ol>{error && <p className="error-message" role="alert">{error}</p>}{result && <p className="quiz-result" role="status">{result.responseType === 'rating' ? 'Pre Use survey complete. Your responses have been saved.' : `Pre Use complete: ${result.score}%`}</p>}<button type="submit" className="primary-small" disabled={submitting || !questions.length || Boolean(result)}>{submitting ? 'Submitting...' : 'Submit Pre Use'}</button></form></section></div>
 }
 
 

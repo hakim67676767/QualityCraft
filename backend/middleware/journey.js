@@ -1,8 +1,8 @@
 // Student journey guards.
 //
 // The PRD requires the sequence to be enforced server-side, not just hidden in
-// the UI: a student must belong to a class, then finish the pre-test, then work
-// through modules in order, before the post-test. Contacting the API directly
+// the UI: a student must belong to a class, then finish the Pre Use, then work
+// through modules in order, before the Post Use. Contacting the API directly
 // must not skip a stage, so these middleware run before the handlers that touch
 // learning content.
 
@@ -20,13 +20,13 @@ const requireClassMembership = asyncHandler(async (req, res, next) => {
     return next()
 })
 
-// Pre-test gate: a recorded 'pre' survey response is the proof of completion.
+// Pre Use gate: a recorded 'pre' survey response is the proof of completion.
 const requirePreTest = asyncHandler(async (req, res, next) => {
     const [rows] = await db.promise().execute(
         "SELECT response_id FROM `survey_response` WHERE user_id = ? AND phase = 'pre' LIMIT 1",
         [req.auth.id]
     )
-    if (!rows.length) throw new HttpError(403, "Complete the pre-test before accessing modules")
+    if (!rows.length) throw new HttpError(403, "Complete the Pre Use before accessing modules")
     return next()
 })
 
@@ -59,12 +59,12 @@ async function unlockedModuleIds(userId) {
     return { unlocked, ordered, completed }
 }
 
-// Post-test gate: every published module must be complete.
+// Post Use gate: every published module must be complete.
 const requireCompletedModules = asyncHandler(async (req, res, next) => {
     const { ordered, completed } = await unlockedModuleIds(req.auth.id)
     if (!ordered.length) throw new HttpError(403, "There are no published modules to complete yet")
     if (!ordered.every((moduleId) => completed.has(moduleId))) {
-        throw new HttpError(403, "Complete every learning module before taking the post-test")
+        throw new HttpError(403, "Complete every learning module before taking the Post Use")
     }
     return next()
 })

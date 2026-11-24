@@ -30,4 +30,4 @@ Changes to already-published content are saved directly. The **Published** statu
 - **Hide:** use this to take a module out of the student Learning Path while keeping its content.
 - **Delete:** requires confirmation and the existing dependency checks. Remove unused questions and activities before deleting a lesson, and unused lessons before deleting a module. Records associated with student work may be protected from deletion; hide the module instead.
 
-Lesson quizzes are managed here. Pre-test and post-test understanding surveys are managed through **Research & Evidence**.
+Lesson quizzes are managed here. Pre Use and Post Use understanding surveys are managed through **Research & Evidence**.

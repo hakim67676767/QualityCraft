@@ -11,15 +11,15 @@ async page => {
   await page.getByRole('button', { name: 'Sign in & keep learning' }).click();
   await page.getByRole('button', { name: 'Survey Results', exact: true }).click();
   const original = await page.evaluate(async () => (await fetch('/api/dashboard')).json());
-  await page.getByRole('button', { name: 'Retake pre-test survey', exact: true }).click();
-  await page.getByRole('heading', { name: 'Retake pre-test survey', level: 2, exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Retake Pre Use survey', exact: true }).click();
+  await page.getByRole('heading', { name: 'Retake Pre Use survey', level: 2, exact: true }).waitFor();
   await page.getByRole('button', { name: 'Cancel retake', exact: true }).click();
   if ((await page.evaluate(async () => (await fetch('/api/dashboard')).json())).surveyRetakes.length !== original.surveyRetakes.length) throw new Error('Cancel saved a retake');
-  for (const [phase, value] of [['pre', '5'], ['post', '3']]) {
-    await page.getByRole('button', { name: `Retake ${phase}-test survey`, exact: true }).click();
-    await page.getByRole('heading', { name: `Retake ${phase}-test survey`, level: 2, exact: true }).waitFor();
+  for (const [label, value] of [['Pre Use', '5'], ['Post Use', '3']]) {
+    await page.getByRole('button', { name: `Retake ${label} survey`, exact: true }).click();
+    await page.getByRole('heading', { name: `Retake ${label} survey`, level: 2, exact: true }).waitFor();
     for (const group of await page.getByRole('group').all()) await group.getByRole('radio').nth(Number(value) - 1).check();
-    await page.getByRole('button', { name: `Submit ${phase}-test`, exact: true }).click();
+    await page.getByRole('button', { name: `Submit ${label}`, exact: true }).click();
     await page.getByRole('status').getByText('Your survey retake has been saved separately. Your original responses are unchanged.', { exact: true }).waitFor();
   }
   const after = await page.evaluate(async () => (await fetch('/api/dashboard')).json());
@@ -40,5 +40,5 @@ async page => {
   }
   page.off('pageerror', onError);
   if (errors.length) throw new Error(JSON.stringify(errors));
-  return { passed: ['cancel without changes', 'pre-test retake', 'post-test retake', 'separate response history', 'original comparison preserved', 'no extra XP', 'reload persistence', 'desktop/tablet layouts'], browserErrors: errors };
+  return { passed: ['cancel without changes', 'Pre Use retake', 'Post Use retake', 'separate response history', 'original comparison preserved', 'no extra XP', 'reload persistence', 'desktop/tablet layouts'], browserErrors: errors };
 }

@@ -69,12 +69,12 @@ export function StudentOverview({ data, questions, journey, onNavigate, user }) 
   const preTestDone = journey?.preTestDone ?? data.surveys.some(item => item.phase === 'pre')
   const nextModule = modules.find(item => !completedIds.has(item.id) && journey?.unlockedModuleIds?.map(Number).includes(item.id))
   const actionView = !joinedClass ? 'classes' : journey?.allModulesComplete && !journey?.postTestDone ? 'post-test' : 'modules'
-  const actionLabel = !joinedClass ? 'Find your class' : !preTestDone ? 'Take the pre-test' : journey?.allModulesComplete ? journey?.postTestDone ? 'Revisit your lessons' : 'Take the post-test' : 'Continue learning'
+  const actionLabel = !joinedClass ? 'Find your class' : !preTestDone ? 'Take the Pre Use' : journey?.allModulesComplete ? journey?.postTestDone ? 'Revisit your lessons' : 'Take the Post Use' : 'Continue learning'
   const nextTitle = !joinedClass ? 'Your adventure starts with a class' : nextModule?.title || journey?.nextAction || 'Explore your learning path'
   const nextLessons = new Set(questions.filter(item => Number(item.module_id) === nextModule?.id).map(item => item.lesson_id)).size
   const recentActivity = [
     ...data.attempts.map(item => ({ id: `quiz-${item.attempt_id}`, icon: 'quiz.svg', title: 'Quiz completed', detail: item.lesson_title, score: `${item.score}%`, date: item.completed_at })),
-    ...data.surveys.map((item, index) => ({ id: `assessment-${index}`, icon: 'quiz.svg', title: `${item.phase === 'pre' ? 'Pre-test' : 'Post-test'} completed`, detail: item.rating_mean != null ? 'Understanding survey' : 'Knowledge check', score: item.rating_mean != null ? `${item.rating_mean} / 5` : `${item.score}%`, date: item.submitted_at })),
+    ...data.surveys.map((item, index) => ({ id: `assessment-${index}`, icon: 'quiz.svg', title: `${item.phase === 'pre' ? 'Pre Use' : 'Post Use'} completed`, detail: item.rating_mean != null ? 'Understanding survey' : 'Knowledge check', score: item.rating_mean != null ? `${item.rating_mean} / 5` : `${item.score}%`, date: item.submitted_at })),
     ...data.badges.map(item => ({ id: `badge-${item.badge_id}`, icon: 'celebrate.svg', title: 'New badge earned', detail: item.name, score: 'Earned', date: item.awarded_at })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3)
 
@@ -99,7 +99,7 @@ export function StudentOverview({ data, questions, journey, onNavigate, user }) 
             const complete = completedIds.has(module.id)
             const unlocked = journey?.unlockedModuleIds?.map(Number).includes(module.id)
             return <button className={`adventure-step${complete ? ' is-complete' : ''}${unlocked && !complete ? ' is-current' : ''}${!unlocked ? ' is-locked' : ''}`} type="button" key={module.id} disabled={!unlocked} onClick={() => onNavigate('modules')}><span className="adventure-number">{complete ? '✓' : String(index + 1).padStart(2, '0')}</span><span className="adventure-copy"><strong>{module.title}</strong><small>{complete ? 'Nicely done! You’ve completed this module.' : unlocked ? 'Ready for your next challenge?' : 'Complete the previous module to unlock.'}</small></span><span className="adventure-status">{complete ? 'Completed' : unlocked ? 'Let’s go →' : 'Locked'}</span></button>
-          })}</div> : <div className="student-empty"><CraftIcon name="student.svg" /><strong>Your learning path is ready to begin.</strong><p>Join a class and complete your pre-test to unlock your lessons.</p><button className="student-text-button" type="button" onClick={() => onNavigate(actionView)}>{actionLabel} →</button></div>}
+          })}</div> : <div className="student-empty"><CraftIcon name="student.svg" /><strong>Your learning path is ready to begin.</strong><p>Join a class and complete your Pre Use to unlock your lessons.</p><button className="student-text-button" type="button" onClick={() => onNavigate(actionView)}>{actionLabel} →</button></div>}
         </section>
       </div>
       <div className="student-side-column">

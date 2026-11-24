@@ -101,11 +101,11 @@ async function requirePreTest(req, res, next) {
             "SELECT response_id FROM `survey_response` WHERE user_id = ? AND phase = 'pre' LIMIT 1",
             [req.auth.id]
         );
-        if (!rows.length) return res.status(403).json({ message: "Complete the pre-test before accessing modules" });
+        if (!rows.length) return res.status(403).json({ message: "Complete the Pre Use before accessing modules" });
         return next();
     } catch (error) {
-        console.error("Pre-test check failed:", error.message);
-        return res.status(500).json({ message: "Unable to verify pre-test status" });
+        console.error("Pre Use check failed:", error.message);
+        return res.status(500).json({ message: "Unable to verify Pre Use status" });
     }
 }
 
@@ -115,7 +115,7 @@ async function requireClassMembership(req, res, next) {
             "SELECT class_member_id FROM `class_member` WHERE student_id = ? LIMIT 1",
             [req.auth.id]
         );
-        if (!rows.length) return res.status(403).json({ message: "Join a class before starting the pre-test" });
+        if (!rows.length) return res.status(403).json({ message: "Join a class before starting the Pre Use" });
         return next();
     } catch (error) {
         console.error("Class membership check failed:", error.message);
@@ -143,7 +143,7 @@ async function requireCompletedModules(req, res, next) {
         const totalModules = Number(rows[0]?.total_modules || 0);
         const completedModules = Number(rows[0]?.completed_modules || 0);
         if (!totalModules || completedModules < totalModules) {
-            return res.status(403).json({ message: "Complete every learning module before taking the post-test" });
+            return res.status(403).json({ message: "Complete every learning module before taking the Post Use" });
         }
         return next();
     } catch (error) {
@@ -585,7 +585,7 @@ app.get("/api/me/journey", requireAuth, requireStudent, asyncHandler(async (req,
     const postTestDone = assessments.some((row) => row.phase === "post");
     const allModulesComplete = ordered.length > 0 && ordered.every((id) => completed.has(id));
     res.json({ joinedClass, preTestDone, postTestDone, moduleIds: ordered, unlockedModuleIds: joinedClass && preTestDone ? [...unlocked] : [], completedModuleIds: [...completed], allModulesComplete,
-        nextAction: !joinedClass ? "Join a class" : !preTestDone ? "Complete the pre-test" : !allModulesComplete ? "Continue learning" : !postTestDone ? "Take the post-test" : "Course complete" });
+        nextAction: !joinedClass ? "Join a class" : !preTestDone ? "Complete the Pre Use" : !allModulesComplete ? "Continue learning" : !postTestDone ? "Take the Post Use" : "Course complete" });
 }));
 
 app.get("/api/suitability", requireAuth, requireStudent, asyncHandler(async (req, res) => {
@@ -594,7 +594,7 @@ app.get("/api/suitability", requireAuth, requireStudent, asyncHandler(async (req
 }));
 app.post("/api/suitability", requireAuth, requireStudent, requireResearchAuthorization, asyncHandler(async (req, res) => {
     const [post] = await db.promise().execute("SELECT response_id FROM `survey_response` WHERE user_id = ? AND phase = 'post'", [req.auth.id]);
-    if (!post.length) throw new HttpError(403, "Complete the post-test first");
+    if (!post.length) throw new HttpError(403, "Complete the Post Use first");
     const answers = req.body.answers;
     if (!Array.isArray(answers) || answers.length !== 6 || answers.some((value) => !Number.isInteger(value) || value < 1 || value > 5)) throw new HttpError(400, "Answer all six suitability questions from 1 to 5");
     const comment = typeof req.body.comment === "string" ? req.body.comment.trim().slice(0, 1000) : null;

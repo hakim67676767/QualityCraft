@@ -164,8 +164,8 @@ const CSV_COLUMNS = [
     { header: "Activities submitted", value: (row) => row.activitySubmissions },
     { header: "Activities outstanding", value: (row) => row.activitiesOutstanding },
     { header: "Feedback status", value: (row) => row.feedbackStatus },
-    { header: "Pre-test score", value: (row) => formatScore(row.preScore, row.preRatingMean) },
-    { header: "Post-test score", value: (row) => formatScore(row.postScore, row.postRatingMean) },
+    { header: "Pre Use score", value: (row) => formatScore(row.preScore, row.preRatingMean) },
+    { header: "Post Use score", value: (row) => formatScore(row.postScore, row.postRatingMean) },
     { header: "Improvement", value: (row) => (row.improvement == null ? "" : row.improvement) },
     { header: "Badges", value: (row) => row.badgeCount },
     { header: "XP", value: (row) => row.xpPoints },
@@ -207,13 +207,13 @@ function streamProgressPdf(rows, { title = "QualityCraft student progress", gene
         document.moveDown(0.2)
         const summary = [
             `Students: ${analytics.studentCount}`,
-            `Average pre-test: ${analytics.averagePreScore == null ? 'n/a' : `${analytics.averagePreScore}/5`}`,
-            `Average post-test: ${analytics.averagePostScore == null ? 'n/a' : `${analytics.averagePostScore}/5`}`,
+            `Average Pre Use: ${analytics.averagePreScore == null ? 'n/a' : `${analytics.averagePreScore}/5`}`,
+            `Average Post Use: ${analytics.averagePostScore == null ? 'n/a' : `${analytics.averagePostScore}/5`}`,
             `Pre-survey understanding: ${analytics.averagePreUnderstanding == null ? 'n/a' : `${analytics.averagePreUnderstanding}/5`}`,
             `Post-survey understanding: ${analytics.averagePostUnderstanding == null ? 'n/a' : `${analytics.averagePostUnderstanding}/5`}`,
             `Average improvement: ${analytics.averageImprovement == null ? "n/a" : analytics.averageImprovement}`,
             `Average quiz score: ${formatPercent(analytics.averageQuizScore)}`,
-            `Post-test completion: ${formatPercent(analytics.postTestCompletionRate)}`,
+            `Post Use completion: ${formatPercent(analytics.postTestCompletionRate)}`,
             `Activities awaiting review: ${analytics.activitiesAwaitingReview}`,
         ]
         document.fontSize(9).fillColor("#333").text(summary.join("   |   "))

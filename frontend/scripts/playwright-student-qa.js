@@ -9,10 +9,10 @@ async page => {
   await page.getByRole('button', { name: 'Sign in & keep learning' }).click();
   await page.getByRole('button', { name: 'Classes', exact: true }).click();
   await page.getByRole('button', { name: 'Join class', exact: true }).click();
-  await page.getByRole('heading', { name: 'Pre-test', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Pre Use', exact: true }).waitFor();
   await page.getByRole('radio', { name: 'Prevent defects', exact: true }).check();
   await page.screenshot({ path: 'design-review/playwright/04-published-pre-test.png', fullPage: true });
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
   await page.locator('.pre-test-page').waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: 'Learning Path', exact: true }).click();
   await page.getByRole('heading', { name: 'Your class assignments', exact: true }).waitFor();
@@ -61,9 +61,9 @@ async page => {
       await page.getByRole('button', { name: /Return to Learning Path/ }).click();
     }
   }
-  await page.getByRole('button', { name: 'Post-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Post Use', exact: true }).click();
   await page.getByRole('radio', { name: 'Peer review', exact: true }).check();
-  await page.getByRole('button', { name: 'Submit post-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Post Use', exact: true }).click();
   await page.getByRole('heading', { name: 'Tell us about your experience', exact: true }).waitFor();
   for (const select of await page.locator('.pre-test-panel select').all()) await select.selectOption('5');
   await page.getByRole('textbox', { name: 'Optional suggestion' }).fill('Browser QA: clear learning journey.');
@@ -74,5 +74,5 @@ async page => {
   await page.locator('.dashboard-content').waitFor();
   page.off('pageerror', onError);
   if (errors.length) throw new Error(JSON.stringify(errors));
-  return { passed: ['student login', 'class join', 'published multiple-choice pre-test', 'assignment visibility', 'required activity gate', 'five lesson/activity/quiz journeys', 'answer feedback', 'explicit quiz retake', 'post-test', 'suitability survey', 'badges view'], browserErrors: errors };
+  return { passed: ['student login', 'class join', 'published multiple-choice Pre Use', 'assignment visibility', 'required activity gate', 'five lesson/activity/quiz journeys', 'answer feedback', 'explicit quiz retake', 'post-test', 'suitability survey', 'badges view'], browserErrors: errors };
 }

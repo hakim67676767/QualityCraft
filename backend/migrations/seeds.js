@@ -8,6 +8,35 @@
 
 const seeds = [
     {
+        name: "survey-reward-labels",
+        phase: "postIndex",
+        sql: `UPDATE \`gamification_rule\`
+            SET name = CASE
+                    WHEN code = 'pre_test_complete' AND name = 'Complete the pre-test' THEN 'Complete Pre Use'
+                    WHEN code = 'post_test_complete' AND name = 'Complete the post-test' THEN 'Complete Post Use'
+                    ELSE name
+                END,
+                description = CASE
+                    WHEN code = 'pre_test_complete' AND description = 'Awarded for finishing the pre-test gate.' THEN 'Awarded for completing the Pre Use survey.'
+                    ELSE description
+                END
+            WHERE (code = 'pre_test_complete' AND (name = 'Complete the pre-test' OR description = 'Awarded for finishing the pre-test gate.'))
+               OR (code = 'post_test_complete' AND name = 'Complete the post-test')`,
+    },
+    {
+        name: "post-use-badge-labels",
+        phase: "postIndex",
+        sql: `UPDATE \`badge\` b
+            LEFT JOIN \`badge\` renamed ON renamed.name = 'Post Use Finisher'
+            SET b.name = IF(b.name = 'Post-Test Finisher' AND renamed.badge_id IS NULL, 'Post Use Finisher', b.name),
+                b.description = IF(b.description = 'Completed the final post-test.', 'Completed the Post Use survey.', b.description),
+                b.criteria = IF(b.criteria = 'Submit the post-test.', 'Submit Post Use.', b.criteria)
+            WHERE b.code = 'post_test_finisher'
+              AND ((b.name = 'Post-Test Finisher' AND renamed.badge_id IS NULL)
+                OR b.description = 'Completed the final post-test.'
+                OR b.criteria = 'Submit the post-test.')`,
+    },
+    {
         name: "negative-testing-question-wording",
         phase: "postIndex",
         sql: `UPDATE \`question\` q
@@ -105,12 +134,12 @@ const postDedupeIndexes = [
 
 const gamificationRules = [
     { code: "class_join", name: "Join a class", eventType: "class_join", xp: 5, description: "Awarded once when a student joins a class." },
-    { code: "pre_test_complete", name: "Complete the pre-test", eventType: "pre_test_complete", xp: 15, description: "Awarded for finishing the pre-test gate." },
+    { code: "pre_test_complete", name: "Complete Pre Use", eventType: "pre_test_complete", xp: 15, description: "Awarded for completing the Pre Use survey." },
     { code: "quiz_submission", name: "Submit a quiz", eventType: "quiz_submission", xp: 10, description: "Base XP for submitting any lesson quiz." },
     { code: "quiz_correct_answer", name: "Correct quiz answer", eventType: "quiz_correct_answer", xp: 2, description: "Awarded per correct answer in a lesson quiz." },
     { code: "activity_submission", name: "Submit a practical activity", eventType: "activity_submission", xp: 20, description: "Awarded once per activity a student submits." },
     { code: "module_complete", name: "Complete a module", eventType: "module_complete", xp: 30, description: "Awarded when every lesson quiz score is at least 50%. Reading and practical submissions are optional." },
-    { code: "post_test_complete", name: "Complete the post-test", eventType: "post_test_complete", xp: 40, description: "Awarded for finishing the final assessment." },
+    { code: "post_test_complete", name: "Complete Post Use", eventType: "post_test_complete", xp: 40, description: "Awarded for finishing the final assessment." },
 ]
 
 const badgeCatalogue = [
@@ -120,7 +149,7 @@ const badgeCatalogue = [
     { code: "activity_explorer", name: "Activity Explorer", criteriaType: "activity_count", threshold: 3, icon: "compass", sortOrder: 4, description: "Submitted three practical activities.", criteria: "Submit 3 practical activities." },
     { code: "module_master", name: "Module Master", criteriaType: "module_count", threshold: 1, icon: "layers", sortOrder: 5, description: "Completed a full learning module.", criteria: "Complete any module." },
     { code: "course_champion", name: "Course Champion", criteriaType: "module_count_all", threshold: 1, icon: "trophy", sortOrder: 6, description: "Completed every published module.", criteria: "Complete every published module." },
-    { code: "post_test_finisher", name: "Post-Test Finisher", criteriaType: "post_test_count", threshold: 1, icon: "check", sortOrder: 7, description: "Completed the final post-test.", criteria: "Submit the post-test." },
+    { code: "post_test_finisher", name: "Post Use Finisher", criteriaType: "post_test_count", threshold: 1, icon: "check", sortOrder: 7, description: "Completed the Post Use survey.", criteria: "Submit Post Use." },
     { code: "xp_collector", name: "XP Collector", criteriaType: "xp_threshold", threshold: 100, icon: "bolt", sortOrder: 8, description: "Earned 100 XP across the course.", criteria: "Earn 100 XP." },
 ]
 

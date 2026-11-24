@@ -8,6 +8,7 @@ const knownBadges = {
   'Module Master': 'module_count',
   'Course Champion': 'module_count_all',
   'Post-Test Finisher': 'post_test_count',
+  'Post Use Finisher': 'post_test_count',
   'XP Collector': 'xp_threshold',
 }
 

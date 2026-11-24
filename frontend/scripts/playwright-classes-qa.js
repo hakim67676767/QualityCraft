@@ -93,9 +93,9 @@ async page => {
   await page.locator('.classes-search').getByRole('button', { name: 'Clear search', exact: true }).click();
   const groupA = page.getByRole('article', { name: 'Software Testing · Group A', exact: true });
   await groupA.getByRole('button', { name: 'Join class', exact: true }).click();
-  await page.getByRole('heading', { name: 'Pre-test survey', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Pre Use survey', exact: true }).waitFor();
   for (const group of await page.getByRole('group').all()) await group.getByRole('radio').nth(2).check();
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
   await page.locator('.pre-test-page').waitFor({ state: 'hidden' });
   await openClasses();
   if (await page.locator('[aria-labelledby="classes-joined"] .class-card').count() !== 1 || await page.locator('[aria-labelledby="classes-available"] .class-card').count() !== 2) throw new Error('Joined and available classes are not separated');
@@ -121,5 +121,5 @@ async page => {
   await layout('admin');
   page.off('pageerror', onError);
   if (errors.length) throw new Error(JSON.stringify(errors));
-  return { passed: ['empty states and create-field focus', 'teacher and administrator class creation', 'teacher ownership filter', 'search and clear', 'load/create/join failure recovery', 'first join opens pre-test', 'joined/available sections', 'additional membership and reload', 'learning path/assignments/monitoring shortcuts', 'three role layouts at 1440/1024/768'], browserErrors: errors };
+  return { passed: ['empty states and create-field focus', 'teacher and administrator class creation', 'teacher ownership filter', 'search and clear', 'load/create/join failure recovery', 'first join opens Pre Use', 'joined/available sections', 'additional membership and reload', 'learning path/assignments/monitoring shortcuts', 'three role layouts at 1440/1024/768'], browserErrors: errors };
 }

@@ -31,9 +31,9 @@ async page => {
   await login('student', email);
   await page.getByRole('button', { name: 'Classes', exact: true }).click();
   await page.getByRole('button', { name: 'Join class', exact: true }).click();
-  await page.getByRole('heading', { name: 'Pre-test survey', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Pre Use survey', exact: true }).waitFor();
   for (const group of await page.getByRole('group').all()) await group.getByRole('radio').nth(2).check();
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
   await page.locator('.pre-test-page').waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: 'Learning Path', exact: true }).click();
   for (const width of [1440, 1024, 768]) {

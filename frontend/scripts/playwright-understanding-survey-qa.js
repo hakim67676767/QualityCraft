@@ -45,7 +45,7 @@ async page => {
   await login('student', 'student@survey.test');
   await page.getByRole('button', { name: 'Classes', exact: true }).click();
   await page.getByRole('button', { name: 'Join class', exact: true }).click();
-  await page.getByRole('heading', { name: 'Pre-test survey', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Pre Use survey', exact: true }).waitFor();
   const preStatements = await page.locator('.assessment-question legend').allTextContents();
   if (preStatements.length !== 10) throw new Error('Expected ten understanding statements');
   for (const width of [1440, 1024, 768]) {
@@ -54,15 +54,15 @@ async page => {
     await page.screenshot({ path: `design-review/playwright/25-pre-survey-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
-  if (!await page.getByRole('heading', { name: 'Pre-test survey', exact: true }).isVisible()) throw new Error('Incomplete form submitted');
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
+  if (!await page.getByRole('heading', { name: 'Pre Use survey', exact: true }).isVisible()) throw new Error('Incomplete form submitted');
   const groups = page.getByRole('group');
   const first = groups.first().getByRole('radio').first();
   await first.focus();
   await page.keyboard.press('ArrowRight');
   if (!await groups.first().getByRole('radio').nth(1).isChecked()) throw new Error('Native keyboard rating selection failed');
   for (const group of await groups.all()) await group.getByRole('radio', { name: '2 Disagree', exact: true }).check();
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
   await page.locator('.pre-test-page').waitFor({ state: 'hidden' });
   await page.reload();
   await page.getByRole('button', { name: 'Survey Results', exact: true }).click();
@@ -113,18 +113,18 @@ async page => {
     }
   }
 
-  await page.getByRole('button', { name: 'Post-test', exact: true }).click();
-  await page.getByRole('heading', { name: 'Post-test survey', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Post Use', exact: true }).click();
+  await page.getByRole('heading', { name: 'Post Use survey', exact: true }).waitFor();
   const postStatements = await page.locator('.assessment-question legend').allTextContents();
   if (JSON.stringify(preStatements) !== JSON.stringify(postStatements)) throw new Error('Pre/post statements differ');
   for (const group of await page.getByRole('group').all()) await group.getByRole('radio', { name: '4 Agree', exact: true }).check();
   await page.screenshot({ path: 'design-review/playwright/26-post-survey.png', fullPage: true });
-  await page.getByRole('button', { name: 'Submit post-test', exact: true }).click();
-  await page.getByRole('heading', { name: 'Post-test survey complete', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Submit Post Use', exact: true }).click();
+  await page.getByRole('heading', { name: 'Post Use survey complete', exact: true }).waitFor();
   await page.reload();
-  await page.getByRole('button', { name: 'Post-test', exact: true }).click();
-  await page.getByRole('heading', { name: 'Post-test survey complete', exact: true }).waitFor();
-  if (await page.getByRole('button', { name: 'Submit post-test', exact: true }).count()) throw new Error('Completed survey allows resubmission after reload');
+  await page.getByRole('button', { name: 'Post Use', exact: true }).click();
+  await page.getByRole('heading', { name: 'Post Use survey complete', exact: true }).waitFor();
+  if (await page.getByRole('button', { name: 'Submit Post Use', exact: true }).count()) throw new Error('Completed survey allows resubmission after reload');
   await page.getByRole('heading', { name: 'Tell us about your experience', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Survey Results', exact: true }).click();
   await page.getByText('+2', { exact: true }).waitFor();

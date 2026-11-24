@@ -83,9 +83,9 @@ async page => {
   await login('student', 'student@progress.test');
   await page.getByRole('button', { name: 'Classes', exact: true }).click();
   await page.getByRole('button', { name: 'Join class', exact: true }).click();
-  await page.getByRole('heading', { name: 'Pre-test survey', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Pre Use survey', exact: true }).waitFor();
   for (const group of await page.getByRole('group').all()) await group.getByRole('radio').nth(2).check();
-  await page.getByRole('button', { name: 'Submit pre-test', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Pre Use', exact: true }).click();
   await page.locator('.pre-test-page').waitFor({ state: 'hidden' });
   await progressPage();
   if (await page.locator('.progress-module-list > li').count() !== 5 || await page.locator('.progress-course-total > strong').innerText() !== '0%') throw new Error('New learner does not see all five modules at 0%');
@@ -156,11 +156,11 @@ async page => {
   await history.getByText('80%', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Show latest five', exact: true }).click();
   await layout('complete');
-  await page.locator('.progress-next-action').getByRole('button', { name: /^Open post-test survey/ }).click();
-  await page.getByRole('heading', { name: 'Post-test survey', exact: true }).waitFor();
+  await page.locator('.progress-next-action').getByRole('button', { name: /^Open Post Use survey/ }).click();
+  await page.getByRole('heading', { name: 'Post Use survey', exact: true }).waitFor();
   for (const group of await page.getByRole('group').all()) await group.getByRole('radio').nth(3).check();
-  await page.getByRole('button', { name: 'Submit post-test', exact: true }).click();
-  await page.getByRole('heading', { name: 'Post-test survey complete', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Submit Post Use', exact: true }).click();
+  await page.getByRole('heading', { name: 'Post Use survey complete', exact: true }).waitFor();
   await progressPage();
   await page.locator('.progress-next-action').getByRole('button', { name: /^View survey results/ }).click();
   await page.getByRole('heading', { name: 'Your understanding surveys', exact: true }).waitFor();
@@ -189,5 +189,5 @@ async page => {
   await progressPage();
   page.off('pageerror', onError);
   if (errors.length) throw new Error(JSON.stringify(errors));
-  return { passed: ['all modules before learning', 'reading/practical/quiz progress of 20/50/90/100 percent', 'correct 0/20/100 course completion', 'module status filters and empty filter', 'quiz retake and full history', 'post-test and results actions', 'reload persistence', 'empty published catalogue', 'four progress states at 1440/1024/768 in light and dark system preferences'], browserErrors: errors };
+  return { passed: ['all modules before learning', 'reading/practical/quiz progress of 20/50/90/100 percent', 'correct 0/20/100 course completion', 'module status filters and empty filter', 'quiz retake and full history', 'Post Use and results actions', 'reload persistence', 'empty published catalogue', 'four progress states at 1440/1024/768 in light and dark system preferences'], browserErrors: errors };
 }
